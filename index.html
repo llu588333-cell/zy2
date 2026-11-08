@@ -1,0 +1,3075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1B1622" />
+<title>吃瓜识谣扭蛋机</title>
+<style>
+  :root{
+    --bg0:#1B1622;
+    --bg1:#1A1E2A;
+    --card:#2A2333;
+    --line:rgba(255,255,255,.10);
+    --text:#F2EAF0;
+    --muted:#B9AABF;
+    --pink:#FF7A8A;
+    --blue:#6BA8FF;
+    --orange:#FFA45C;
+    --kw-bg:rgba(255,200,120,.18);
+    --kw:#FFD28A;
+    --foot-h:calc(38px + env(safe-area-inset-bottom));
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+  html{background:var(--bg0);}
+  body{
+    background:
+      radial-gradient(circle at 28% 18%, rgba(255,107,129,0.16), transparent 46%),
+      radial-gradient(circle at 82% 72%, rgba(107,168,255,0.12), transparent 42%),
+      linear-gradient(160deg, #1B1622 0%, #221A2B 55%, #1A1E2A 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    align-items:stretch;
+  }
+  button{font-family:inherit;}
+  [hidden]{display:none !important;}
+  .app{
+    position:relative;
+    width:100%;
+    max-width:430px;
+    height:100vh;
+    height:100dvh;
+    overflow:hidden;
+    isolation:isolate;
+    background:transparent;
+    box-shadow:0 0 80px rgba(0,0,0,.7);
+  }
+  .app::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);
+    background-size:20px 20px;
+    opacity:.35;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ---------- preferences ---------- */
+  .global-tools{
+    position:absolute;
+    top:calc(10px + env(safe-area-inset-top));
+    right:10px;
+    display:flex;
+    gap:6px;
+    z-index:80;
+  }
+  .tool-btn{
+    width:32px;height:32px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(42,35,51,.92);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    font-size:14px;line-height:1;
+    display:grid;place-items:center;
+    cursor:pointer;
+    padding:0;
+    color:var(--text);
+  }
+  .tool-btn.is-off{opacity:.5;filter:saturate(.35);}
+  .app[data-page="P9"] .global-tools{opacity:0;pointer-events:none;visibility:hidden;}
+
+  /* ---------- pages ---------- */
+  .page{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(12px);
+    transition:opacity .35s ease-out,transform .35s ease-out,visibility .35s;
+    z-index:1;
+  }
+  .page.active{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:none;
+    z-index:2;
+  }
+  .page-scroll{
+    position:relative;
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding:calc(18px + env(safe-area-inset-top)) 18px calc(140px + env(safe-area-inset-bottom));
+    z-index:1;
+  }
+  .page-scroll::-webkit-scrollbar{display:none;}
+  .page-scroll.pad-double{padding-bottom:calc(200px + env(safe-area-inset-bottom));}
+  .page-scroll.p0{
+    display:flex;
+    flex-direction:column;
+    min-height:100dvh;
+    padding:calc(56px + env(safe-area-inset-top)) 16px 0;
+  }
+  .page-scroll.end{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding-bottom:calc(var(--foot-h) + 24px);
+  }
+
+  /* ---------- fixed footer ---------- */
+  .page-foot{
+    position:absolute;
+    left:0;right:0;bottom:0;
+    z-index:60;
+    min-height:var(--foot-h);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 12px calc(6px + env(safe-area-inset-bottom));
+    font-size:9.5px;
+    line-height:1.35;
+    text-align:center;
+    color:var(--muted);
+    letter-spacing:.01em;
+    background:linear-gradient(180deg,rgba(27,22,34,0),#1B1622 45%);
+    border-top:1px solid rgba(255,255,255,.04);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+  }
+
+  /* ---------- action dock ---------- */
+  .action-dock{
+    position:absolute;
+    left:0;right:0;bottom:0;
+    z-index:50;
+    padding:14px 0 48px;
+    padding:14px 0 calc(48px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,rgba(27,22,34,0),rgba(27,22,34,.9) 35%,#1B1622 72%);
+  }
+  .action-area{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    width:100%;
+    padding:0 20px;
+    box-sizing:border-box;
+  }
+  .action-area .btn.single{
+    width:min(80vw,320px);
+    margin:0 auto;
+    display:block;
+  }
+  .action-row{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    width:100%;
+  }
+  .action-row .btn{
+    flex:1 1 0;
+    max-width:160px;
+    min-width:0;
+    white-space:normal;
+    line-height:1.25;
+    padding:10px 12px;
+    font-size:14px;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    appearance:none;
+    border:none;
+    min-height:48px;
+    padding:12px 16px;
+    border-radius:14px;
+    font-size:14.5px;
+    font-weight:800;
+    line-height:1.25;
+    letter-spacing:.01em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:6px;
+    cursor:pointer;
+    transition:transform .12s ease,box-shadow .2s ease,opacity .2s ease;
+    user-select:none;
+    touch-action:manipulation;
+  }
+  .btn:active{transform:translateY(1px) scale(.99);}
+  .btn:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.25);box-shadow:none;transform:none;}
+  .btn-primary{
+    color:#fff;
+    background:linear-gradient(135deg,#FF9AA8,#FF7A8A 55%,#E85D70);
+    box-shadow:0 10px 24px rgba(255,122,138,.28),inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .btn-ghost{
+    color:var(--text);
+    background:rgba(42,35,51,.88);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 6px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .btn-blue{
+    color:#fff;
+    background:linear-gradient(135deg,#8FBFFF,#6BA8FF 55%,#4A8FE7);
+    box-shadow:0 10px 24px rgba(107,168,255,.24),inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .btn-orange{
+    color:#1A0F00;
+    background:linear-gradient(135deg,#FFC07F,#FFA45C 60%,#E08A45);
+    box-shadow:0 10px 24px rgba(255,164,92,.22),inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .btn-block{width:100%;}
+  .link-btn{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:var(--blue);
+    font-size:12px;
+    font-weight:700;
+    padding:5px 0;
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
+  .link-btn:disabled{color:var(--muted);text-decoration:none;cursor:default;}
+
+  /* ---------- shared ---------- */
+  .page-title{
+    margin:4px 0 9px;
+    font-size:22px;
+    line-height:1.42;
+    font-weight:900;
+    letter-spacing:-.01em;
+    color:var(--text);
+  }
+  .page-hint{
+    margin:0 0 14px;
+    font-size:13px;
+    line-height:1.65;
+    color:var(--muted);
+  }
+  .card{
+    background:linear-gradient(160deg,#332B3E,#2A2333 55%,#251F2E);
+    border:1px solid var(--line);
+    border-radius:20px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:36px;
+    margin-bottom:10px;
+    padding-right:78px;
+  }
+  .topbar-title{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.12em;
+    color:var(--muted);
+  }
+  .step-pill{
+    display:inline-flex;
+    align-items:center;
+    height:26px;
+    padding:0 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    color:var(--pink);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
+  .icon-btn{
+    appearance:none;
+    width:34px;height:34px;flex:none;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(42,35,51,.92);
+    box-shadow:0 4px 12px rgba(0,0,0,.3);
+    color:var(--text);
+    font-size:18px;
+    font-weight:800;
+    display:grid;place-items:center;
+    cursor:pointer;
+    padding:0;
+  }
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    min-height:23px;
+    padding:3px 9px;
+    border-radius:8px;
+    background:rgba(255,122,138,.12);
+    border:1px solid rgba(255,122,138,.18);
+    color:#FFA7B2;
+    font-size:11px;
+    line-height:1.3;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .tag-blue{
+    background:rgba(107,168,255,.10);
+    border-color:rgba(107,168,255,.2);
+    color:#8FBFFF;
+  }
+  .sec-head{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin-bottom:8px;
+    font-size:13px;
+    font-weight:900;
+    color:var(--text);
+  }
+  .sec-ico{font-size:15px;line-height:1;}
+  .sec-body{
+    font-size:13.6px;
+    line-height:1.8;
+    color:var(--text);
+    margin:0;
+  }
+  .tiny{font-size:11px;line-height:1.6;color:var(--muted);margin:0 0 8px;}
+
+  /* ---------- melon spirit ---------- */
+  .melon{
+    position:relative;
+    width:48px;
+    height:48px;
+    flex:none;
+    border-radius:50%;
+    background:radial-gradient(circle at 32% 25%,#7EE787,#2EA043 58%,#1A7F37 100%);
+    border:2px solid rgba(255,255,255,.12);
+    box-shadow:inset -6px -8px 12px rgba(0,0,0,.35),0 6px 14px rgba(0,0,0,.45);
+    pointer-events:none;
+    z-index:5;
+  }
+  .melon::before{
+    content:"";
+    position:absolute;
+    inset:5%;
+    border-radius:50%;
+    background:repeating-linear-gradient(102deg,transparent 0 9px,rgba(4,30,12,.18) 9px 12px);
+    z-index:0;
+  }
+  .melon::after{
+    content:"";
+    position:absolute;
+    left:16%;top:13%;
+    width:28%;height:13%;
+    border-radius:50%;
+    background:rgba(255,255,255,.22);
+    transform:rotate(-24deg);
+    filter:blur(1px);
+    z-index:1;
+  }
+  .melon-sprout{
+    position:absolute;
+    left:48%;top:-20%;
+    width:6%;height:22%;
+    border-radius:3px;
+    background:#3FB950;
+    transform:translateX(-50%) rotate(-8deg);
+    z-index:2;
+  }
+  .melon-leaf{
+    position:absolute;
+    left:53%;top:-24%;
+    width:26%;height:14%;
+    border-radius:50% 50% 50% 0;
+    background:#56D364;
+    transform:rotate(-18deg);
+    z-index:2;
+    box-shadow:0 2px 3px rgba(0,0,0,.2);
+  }
+  .melon-eye{
+    position:absolute;
+    top:34%;
+    width:15%;height:21%;
+    border-radius:50%;
+    background:#07130A;
+    z-index:3;
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.25);
+    transition:height .15s ease,opacity .15s ease,transform .15s ease;
+  }
+  .melon-eye.left{left:27%;transform:rotate(-7deg);}
+  .melon-eye.right{right:27%;transform:rotate(7deg);}
+  .melon-mouth{
+    position:absolute;
+    left:50%;top:62%;
+    width:24%;height:11%;
+    border-bottom:2px solid #07130A;
+    border-radius:0 0 14px 14px;
+    transform:translateX(-50%);
+    z-index:3;
+    transition:all .15s ease;
+  }
+  .melon-hand{
+    position:absolute;
+    width:24%;height:24%;
+    top:31%;
+    border-radius:50%;
+    background:#3FB950;
+    border:1px solid #1A7F37;
+    opacity:0;
+    z-index:6;
+    transition:opacity .12s ease;
+  }
+  .melon-hand.left{left:13%;}
+  .melon-hand.right{right:13%;}
+  .melon.covering .melon-eye{opacity:0;}
+  .melon.covering .melon-hand{opacity:1;}
+  .melon.covering .melon-mouth{opacity:.35;}
+  .melon.happy .melon-mouth{
+    width:26%;height:14%;
+    border-bottom:2px solid #07130A;
+    border-radius:0 0 16px 16px;
+  }
+  .melon.sad .melon-eye{height:15%;top:38%;}
+  .melon.sad .melon-mouth{
+    top:68%;
+    height:8%;
+    border-bottom:0;
+    border-top:2px solid #07130A;
+    border-radius:14px 14px 0 0;
+  }
+  .melon.scared .melon-eye{height:24%;width:17%;}
+  .melon.nervous{animation:melonNervous 1.4s ease-in-out infinite;}
+  .melon.jump{animation:melonJump .7s cubic-bezier(.2,.8,.3,1);}
+  .melon.head-shake{animation:melonShake .6s ease-in-out;}
+  .melon.p2-looking{animation:p2Look 4s ease-in-out infinite;}
+  @keyframes p2Look{
+    0%,100%{transform:translateY(0);}
+    25%{transform:translateY(52px);}
+    55%{transform:translateY(104px);}
+    75%{transform:translateY(52px);}
+  }
+  .melon.p2-looking .melon-eye.left{animation:eyeLeft 2.2s ease-in-out infinite;}
+  .melon.p2-looking .melon-eye.right{animation:eyeRight 2.2s ease-in-out infinite;}
+  .melon.p3-peek{animation:melonPeek 5s ease-in-out infinite;}
+  .melon.p5-peek{animation:melonEdge 5.5s ease-in-out infinite;}
+  @keyframes melonNervous{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-2px) rotate(2deg);}}
+  @keyframes melonJump{
+    0%,100%{transform:translateY(0) scale(1);}
+    32%{transform:translateY(-18px) scale(1.06);}
+    62%{transform:translateY(0) scale(.98);}
+    80%{transform:translateY(-5px) scale(1.01);}
+  }
+  @keyframes melonShake{
+    0%,100%{transform:rotate(-8deg) translateX(0);}
+    25%{transform:rotate(-10deg) translateX(-4px);}
+    50%{transform:rotate(-6deg) translateX(4px);}
+    75%{transform:rotate(-9deg) translateX(-2px);}
+  }
+  @keyframes eyeLeft{0%,100%{transform:translateX(0) rotate(-7deg);}30%,60%{transform:translateX(-2px) rotate(-7deg);}}
+  @keyframes eyeRight{0%,100%{transform:translateX(0) rotate(7deg);}30%,60%{transform:translateX(-2px) rotate(7deg);}}
+  @keyframes melonPeek{0%,68%,100%{transform:translateY(0) rotate(0);}76%{transform:translateY(-7px) rotate(3deg);}84%{transform:translateY(-2px) rotate(1deg);}}
+  @keyframes melonEdge{0%,100%{transform:translateX(0);}50%{transform:translateX(-4px);}}
+  .melon-prop{
+    position:absolute;
+    right:-8%;top:-10%;
+    font-size:17px;
+    z-index:7;
+    opacity:0;
+    transform:scale(.6) rotate(-8deg);
+    transition:opacity .2s ease,transform .2s ease;
+  }
+  .melon.offer .melon-prop{opacity:1;transform:scale(1) rotate(-8deg);}
+  .melon-sign{
+    position:absolute;
+    left:50%;top:-44%;
+    transform:translateX(-50%) rotate(-6deg);
+    padding:3px 6px;
+    border-radius:5px;
+    background:linear-gradient(135deg,#FFC07F,#FFA45C);
+    border:1px solid rgba(255,255,255,.35);
+    color:#1A0F00;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+    white-space:nowrap;
+    box-shadow:0 4px 10px rgba(255,164,92,.35);
+    z-index:7;
+  }
+  .melon-sign::after{
+    content:"";
+    position:absolute;
+    left:50%;bottom:-7px;
+    width:2px;height:7px;
+    background:#B9AABF;
+  }
+
+  /* ---------- P0 ---------- */
+  .p0-wrap{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+  .p0-title{flex:0 0 auto;text-align:center;}
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    color:var(--muted);
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.14em;
+  }
+  .p0-title h1{
+    margin:12px 0 4px;
+    font-size:clamp(26px,8vw,34px);
+    line-height:1.12;
+    font-weight:800;
+    letter-spacing:-.035em;
+    color:#FFFFFF;
+    text-shadow:0 0 18px rgba(255,122,138,.35);
+  }
+  .p0-title h1 em{
+    font-style:normal;
+    color:#FFFFFF;
+  }
+  .gacha-area{
+    flex:0 0 auto;
+    height:clamp(260px,46dvh,400px);
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 0 0;
+    box-sizing:border-box;
+    transition:height .4s ease-out;
+  }
+  .gacha-area.shrunk{height:clamp(180px,28dvh,240px);}
+  .gacha-wrap{
+    position:relative;
+    width:min(88vw,380px);
+    height:100%;
+    margin:0 auto;
+    filter:drop-shadow(0 28px 34px rgba(0,0,0,.55));
+  }
+  .gacha{
+    position:absolute;
+    inset:0;
+    transform-origin:50% 70%;
+  }
+  .gacha.shake{animation:gachaShake .6s cubic-bezier(.36,.07,.19,.97);}
+  @keyframes gachaShake{
+    0%,100%{transform:translateX(0) rotate(0);}
+    15%{transform:translateX(-6px) rotate(-2deg);}
+    30%{transform:translateX(5px) rotate(2deg);}
+    45%{transform:translateX(-5px) rotate(-1.5deg);}
+    60%{transform:translateX(4px) rotate(1.4deg);}
+    78%{transform:translateX(-2px) rotate(-.6deg);}
+  }
+  .dome{
+    position:absolute;
+    left:3%;top:2%;
+    width:94%;height:59%;
+    border-radius:48% 48% 24px 24px / 46% 46% 20px 20px;
+    background:linear-gradient(160deg,rgba(107,168,255,.18),rgba(255,122,138,.12) 58%,rgba(255,255,255,.04));
+    border:1.5px solid rgba(255,255,255,.18);
+    box-shadow:inset -22px -24px 44px rgba(0,0,0,.5),inset 14px 14px 28px rgba(255,255,255,.07),0 8px 28px rgba(0,0,0,.4);
+    overflow:hidden;
+  }
+  .dome::before{
+    content:"";
+    position:absolute;
+    left:8%;top:8%;
+    width:36%;height:16%;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    transform:rotate(-20deg);
+    filter:blur(2px);
+    z-index:4;
+  }
+  .dome::after{
+    content:"";
+    position:absolute;
+    right:-6%;bottom:-18%;
+    width:50%;height:45%;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,122,138,.16),transparent 70%);
+    filter:blur(8px);
+    z-index:0;
+  }
+  .balls{position:absolute;inset:0;z-index:2;}
+  .ball{
+    position:absolute;
+    width:48px;height:48px;
+    border-radius:50%;
+    box-shadow:inset -5px -6px 9px rgba(0,0,0,.26),inset 4px 4px 8px rgba(255,255,255,.3),0 4px 8px rgba(0,0,0,.18);
+  }
+  .b1{left:2%;bottom:6%;background:radial-gradient(circle at 32% 28%,#FFD8E0,#FF7A8A 70%);transform:rotate(-8deg);}
+  .b2{left:21%;bottom:2%;background:radial-gradient(circle at 32% 28%,#D7E6FF,#6BA8FF 70%);transform:rotate(10deg);}
+  .b3{left:39%;bottom:7%;background:radial-gradient(circle at 32% 28%,#FFE9B8,#FFA45C 70%);transform:rotate(-4deg);}
+  .b4{left:57%;bottom:1%;background:radial-gradient(circle at 32% 28%,#FFE6F0,#D95C9A 70%);transform:rotate(7deg);}
+  .b5{left:75%;bottom:5%;background:radial-gradient(circle at 32% 28%,#DFF7EA,#40C463 70%);transform:rotate(-11deg);}
+  .b6{left:11%;bottom:24%;background:radial-gradient(circle at 32% 28%,#E6D7FF,#A371F7 70%);transform:rotate(6deg);}
+  .b7{left:29%;bottom:29%;background:radial-gradient(circle at 32% 28%,#FFE2C2,#FFA45C 70%);transform:rotate(-7deg);}
+  .b8{left:47%;bottom:23%;background:radial-gradient(circle at 32% 28%,#C9F7FF,#39C5CF 70%);transform:rotate(9deg);}
+  .b9{left:65%;bottom:27%;background:radial-gradient(circle at 32% 28%,#FFD3DB,#FF7A8A 70%);transform:rotate(-5deg);}
+  .machine-body{
+    position:absolute;
+    left:7%;top:55%;
+    width:86%;height:33%;
+    border-radius:24px 24px 30px 30px;
+    background:linear-gradient(160deg,#3A3045,#2A2333 54%,#1E1826);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.08),inset 0 -14px 22px rgba(0,0,0,.5),0 16px 26px rgba(0,0,0,.45);
+    overflow:hidden;
+  }
+  .machine-body::before{
+    content:"";
+    position:absolute;
+    left:8%;right:8%;top:7%;
+    height:2px;
+    border-radius:2px;
+    background:linear-gradient(90deg,transparent,rgba(255,122,138,.7),rgba(107,168,255,.5),transparent);
+    opacity:.8;
+  }
+  .knob{
+    position:absolute;
+    left:50%;top:13%;
+    width:36px;height:36px;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#FFF3C4,#FFCF4D 45%,#F5A623);
+    box-shadow:0 3px 0 #C47A00,inset 0 1px 3px rgba(255,255,255,.8),0 0 18px rgba(255,164,92,.25);
+  }
+  .knob::after{
+    content:"";
+    position:absolute;
+    left:50%;top:50%;
+    width:13px;height:3px;
+    background:rgba(120,70,0,.62);
+    border-radius:2px;
+    transform:translate(-50%,-50%) rotate(35deg);
+  }
+  .machine-label{
+    position:absolute;
+    left:50%;bottom:35%;
+    transform:translateX(-50%);
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.3em;
+    color:rgba(242,234,240,.42);
+  }
+  .slot{
+    position:absolute;
+    left:50%;bottom:12%;
+    width:34%;height:16px;
+    transform:translateX(-50%);
+    border-radius:10px;
+    background:linear-gradient(180deg,#2A1E30,#221A2B);
+    box-shadow:inset 0 4px 6px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.08);
+  }
+  .gacha-base{
+    position:absolute;
+    left:8%;bottom:4%;
+    width:84%;height:20px;
+    border-radius:50%;
+    background:radial-gradient(ellipse,rgba(0,0,0,.65),transparent 70%);
+    filter:blur(5px);
+  }
+  .egg{
+    position:absolute;
+    left:50%;top:36%;
+    width:52px;height:52px;
+    margin-left:-26px;
+    border-radius:50%;
+    background:radial-gradient(circle at 32% 28%,#fff,#FFE0E8 58%,#FFB6C6);
+    border:2px solid rgba(255,255,255,.9);
+    box-shadow:0 8px 16px rgba(0,0,0,.4),inset -5px -8px 12px rgba(255,122,138,.2);
+    display:grid;place-items:center;
+    font-size:23px;
+    opacity:0;
+    transform:translateY(-16px) scale(.3);
+    z-index:7;
+  }
+  .egg.drop{animation:eggDrop .8s cubic-bezier(.18,.86,.36,1) forwards;}
+  @keyframes eggDrop{
+    0%{opacity:0;transform:translateY(-22px) scale(.3);}
+    25%{opacity:1;}
+    65%{opacity:1;transform:translateY(calc(var(--drop-y) * .92)) scale(1.04);}
+    82%{transform:translateY(calc(var(--drop-y) * .97)) scale(1);}
+    100%{opacity:1;transform:translateY(var(--drop-y)) scale(1);}
+  }
+  .flash{
+    position:absolute;
+    inset:-16px;
+    border-radius:44px;
+    background:radial-gradient(circle,rgba(255,255,255,.6),rgba(255,122,138,.18) 35%,transparent 66%);
+    opacity:0;
+    pointer-events:none;
+    z-index:8;
+  }
+  .flash.on{animation:flashPop .75s ease-out;}
+  @keyframes flashPop{0%{opacity:0;transform:scale(.85);}25%{opacity:1;}100%{opacity:0;transform:scale(1.08);}}
+  .melon-p0{position:absolute;top:-20px;right:10%;z-index:9;width:50px;height:50px;}
+  .pick-prompt{
+    flex:0 0 auto;
+    margin:12px 0 18px;
+    text-align:center;
+    font-size:clamp(24px,7vw,32px);
+    line-height:1.3;
+    font-weight:800;
+    letter-spacing:.02em;
+    color:#FFFFFF;
+    text-shadow:0 0 14px rgba(255,122,138,.18);
+  }
+  .draw-card{
+    position:relative;
+    width:min(92vw,400px);
+    max-width:100%;
+    margin:12px auto 0;
+    padding:16px;
+    border-radius:18px;
+    border:1px solid rgba(255,122,138,.22);
+    background:linear-gradient(160deg,#332B3E,#2A2333);
+    box-shadow:0 14px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.05);
+    display:none;
+    opacity:0;
+    transform:translateY(12px) scale(.97);
+    transition:opacity .32s ease,transform .32s cubic-bezier(.2,.8,.3,1);
+  }
+  .draw-card.show{opacity:1;transform:none;}
+  .draw-card.swapping{opacity:.35;transform:scale(.985);}
+  .draw-card.pop{animation:cardPop .42s cubic-bezier(.2,.8,.3,1);}
+  @keyframes cardPop{0%{transform:translateY(13px) scale(.955);}100%{transform:translateY(0) scale(1);}}
+  .dc-kicker{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--pink);margin-bottom:6px;}
+  .dc-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:8px;}
+  .dc-type{font-size:10px;color:var(--muted);}
+  .dc-title{
+    font-size:18px;
+    font-weight:700;
+    line-height:1.5;
+    color:var(--text);
+    margin:0;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    white-space:normal;
+  }
+  .dc-hint{
+    margin:10px 0 0;
+    font-size:12px;
+    line-height:1.5;
+    color:var(--muted);
+  }
+  .p0-actions{
+    width:100%;
+    margin:16px auto 0;
+    flex:0 0 auto;
+  }
+  #pageP0 .page-foot{
+    position:static;
+    left:auto;
+    right:auto;
+    bottom:auto;
+    width:100%;
+    min-height:0;
+    margin:auto auto 0;
+    padding:14px 12px calc(14px + env(safe-area-inset-bottom));
+    background:transparent;
+    border-top:1px solid rgba(255,255,255,.06);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+
+  /* ---------- P1 ---------- */
+  .hot-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+  .hot-badge{
+    display:inline-flex;
+    align-items:center;
+    min-height:26px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:linear-gradient(135deg,rgba(255,122,138,.24),rgba(255,164,92,.2));
+    border:1px solid rgba(255,122,138,.25);
+    color:#FFA7B2;
+    font-size:11px;
+    font-weight:900;
+    box-shadow:0 5px 14px rgba(0,0,0,.2);
+  }
+  .hot-sub{font-size:10px;color:var(--muted);}
+  .event-card{
+    position:relative;
+    padding:17px 17px 66px;
+    overflow:hidden;
+  }
+  .event-card::before{
+    content:"“";
+    position:absolute;
+    right:12px;top:-20px;
+    font-size:88px;
+    line-height:1;
+    font-weight:900;
+    color:rgba(255,122,138,.07);
+    pointer-events:none;
+  }
+  .event-meta{position:relative;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:9px;}
+  .event-title{
+    position:relative;
+    margin:0 0 10px;
+    font-size:19px;
+    line-height:1.55;
+    font-weight:900;
+    color:var(--text);
+  }
+  .event-summary{
+    position:relative;
+    margin:0;
+    font-size:13.5px;
+    line-height:1.9;
+    color:var(--text);
+  }
+  .melon-p1{position:absolute;right:12px;bottom:8px;width:48px;height:48px;transform:rotate(-8deg);}
+  .p1-footnote{margin:14px 0 0;font-size:11px;color:var(--muted);text-align:center;}
+
+  /* ---------- P2 ---------- */
+  .guess-wrap{position:relative;padding-top:26px;}
+  .guess-list{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;}
+  .guess-card{
+    position:relative;
+    width:100%;
+    text-align:left;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:18px;
+    background:linear-gradient(160deg,#332B3E,#2A2333);
+    padding:14px 48px;
+    min-height:64px;
+    box-shadow:0 6px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04);
+    cursor:pointer;
+    transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease,background .18s ease;
+    color:var(--text);
+  }
+  .guess-card:active{transform:scale(.995);}
+  .guess-letter{
+    position:absolute;
+    left:13px;top:14px;
+    width:27px;height:27px;
+    border-radius:9px;
+    background:rgba(255,255,255,.06);
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+    display:grid;place-items:center;
+    transition:background .18s,color .18s;
+  }
+  .guess-text{display:block;font-size:13.6px;line-height:1.65;font-weight:700;color:var(--text);}
+  .guess-check{
+    position:absolute;
+    right:12px;top:10px;
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--pink);
+    color:#fff;
+    font-size:12px;
+    font-weight:900;
+    display:grid;place-items:center;
+    opacity:0;
+    transform:scale(.6);
+    transition:opacity .18s,transform .18s;
+    box-shadow:0 0 12px rgba(255,122,138,.4);
+  }
+  .guess-card.selected{
+    border-color:rgba(255,122,138,.75);
+    background:linear-gradient(160deg,rgba(255,122,138,.14),#2A2333 68%);
+    box-shadow:0 10px 26px rgba(255,122,138,.16),inset 0 1px 0 rgba(255,255,255,.05);
+    transform:translateY(-1px) scale(1.012);
+  }
+  .guess-card.selected .guess-letter{background:var(--pink);color:#fff;}
+  .guess-card.selected .guess-check{opacity:1;transform:scale(1);}
+  .melon-p2{
+    position:absolute;
+    top:0;right:4px;
+    width:44px;height:44px;
+    z-index:3;
+    transition:top .3s ease,right .3s ease;
+  }
+  .guess-bubble{
+    position:absolute;
+    right:52px;top:0;
+    max-width:220px;
+    padding:8px 10px;
+    border-radius:12px;
+    background:#201925;
+    border:1px solid rgba(255,122,138,.4);
+    box-shadow:0 8px 20px rgba(0,0,0,.4);
+    color:var(--text);
+    font-size:11.5px;
+    line-height:1.5;
+    opacity:0;
+    transform:translateY(4px);
+    transition:opacity .22s ease,transform .22s ease;
+    pointer-events:none;
+    z-index:6;
+  }
+  .guess-bubble.show{opacity:1;transform:none;}
+  .guess-bubble::after{
+    content:"";
+    position:absolute;
+    right:-6px;top:16px;
+    border:6px solid transparent;
+    border-left-color:rgba(255,122,138,.4);
+    border-right:0;
+  }
+
+  /* ---------- P3 ---------- */
+  .forward-bar{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    margin:0 0 12px;
+    border-radius:999px;
+    background:rgba(255,122,138,.09);
+    border:1px solid rgba(255,122,138,.16);
+    color:#FFA7B2;
+    font-size:11px;
+    font-weight:800;
+  }
+  .forward-bar strong{color:var(--kw);font-variant-numeric:tabular-nums;}
+  .chat-wrap{position:relative;padding-bottom:6px;}
+  .chat-list{display:flex;flex-direction:column;gap:11px;position:relative;z-index:1;}
+  .chat-row{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .26s ease,transform .26s ease;
+  }
+  .chat-row.in{opacity:1;transform:none;}
+  .avatar{
+    width:35px;height:35px;flex:none;
+    border-radius:50%;
+    display:grid;place-items:center;
+    font-size:16px;
+    border:2px solid rgba(255,255,255,.08);
+    box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  .msg{min-width:0;max-width:calc(100% - 44px);}
+  .chat-name{font-size:9.5px;color:var(--muted);margin:0 0 3px 2px;}
+  .bubble{
+    display:inline-block;
+    background:#221A2B;
+    border:1px solid rgba(255,255,255,.08);
+    padding:9px 12px;
+    border-radius:4px 15px 15px 15px;
+    font-size:13.4px;
+    line-height:1.58;
+    color:var(--text);
+    box-shadow:0 5px 14px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);
+    word-break:break-word;
+  }
+  .melon-p3{
+    position:absolute;
+    right:16px;top:44%;
+    width:44px;height:44px;
+    z-index:0;
+    opacity:.9;
+  }
+
+  /* ---------- P4 ---------- */
+  .nudge-card{
+    position:relative;
+    padding:16px 78px 16px 16px;
+    display:flex;
+    align-items:flex-start;
+    gap:11px;
+    background:linear-gradient(155deg,#352C40,#2A2333);
+  }
+  .nudge-emoji{font-size:26px;line-height:1;flex:none;}
+  .nudge-card p{margin:1px 0 0;font-size:13px;line-height:1.7;color:var(--text);font-weight:700;}
+  .melon-p4{position:absolute;right:10px;bottom:8px;width:44px;height:44px;z-index:3;}
+  .melon-alert{
+    position:absolute;
+    right:2px;top:-14px;
+    width:20px;height:20px;
+    border-radius:50%;
+    background:var(--orange);
+    color:#1A0F00;
+    font-size:13px;
+    font-weight:900;
+    display:grid;place-items:center;
+    box-shadow:0 0 14px rgba(255,164,92,.4);
+    z-index:7;
+  }
+  .spread-flash{
+    min-height:18px;
+    font-size:12px;
+    line-height:1.4;
+    font-weight:800;
+    color:var(--orange);
+    text-align:center;
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .spread-flash.show{opacity:1;}
+
+  /* ---------- P5 ---------- */
+  .chaos-meter{
+    height:7px;
+    border-radius:999px;
+    background:rgba(255,164,92,.13);
+    overflow:hidden;
+    margin:0 0 10px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.4);
+  }
+  .chaos-meter span{
+    display:block;
+    width:97%;height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--pink),var(--orange));
+    box-shadow:0 0 10px rgba(255,164,92,.45);
+    animation:meterPulse 1.8s ease-in-out infinite alternate;
+  }
+  @keyframes meterPulse{from{opacity:.7;}to{opacity:1;}}
+  .ticker{
+    overflow:hidden;
+    border-radius:10px;
+    background:rgba(255,164,92,.08);
+    border:1px solid rgba(255,164,92,.13);
+    padding:7px 0;
+    margin-bottom:12px;
+  }
+  .ticker-track{
+    display:flex;
+    gap:18px;
+    white-space:nowrap;
+    width:max-content;
+    animation:tickerMove 14s linear infinite;
+    font-size:10.5px;
+    color:#E5B567;
+    font-weight:800;
+    letter-spacing:.06em;
+  }
+  @keyframes tickerMove{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  .chaos-card{
+    padding:16px;
+    background:linear-gradient(160deg,#332C3A,#2A2333 60%);
+    border-color:rgba(255,164,92,.2);
+  }
+  .chaos-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:9px;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.06em;
+    color:#E5B567;
+  }
+  .chaos-head span:last-child{
+    color:#1A0F00;
+    background:var(--orange);
+    border-radius:999px;
+    padding:3px 7px;
+    font-size:9px;
+  }
+  .fade-seg{
+    margin:0 0 14px;
+    font-size:14.2px;
+    line-height:1.92;
+    color:var(--text);
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .5s ease,transform .5s ease;
+  }
+  .fade-seg:last-child{margin-bottom:0;}
+  .fade-seg.in{opacity:1;transform:none;}
+  .melon-p5{position:absolute;right:-18px;top:34%;width:48px;height:48px;z-index:3;}
+
+  /* ---------- P6 ---------- */
+  .chain-preview{
+    text-align:center;
+    padding:18px 10px 10px;
+    opacity:1;
+    transform:translateY(0);
+    transition:opacity .25s ease,transform .25s ease;
+  }
+  .chain-preview.fading{opacity:0;transform:translateY(-6px);}
+  .chain-label{
+    display:inline-block;
+    margin-bottom:12px;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.16em;
+    color:var(--muted);
+  }
+  .chain-line{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;}
+  .chain-chip{
+    padding:5px 9px;
+    border-radius:999px;
+    background:rgba(255,122,138,.09);
+    border:1px solid rgba(255,122,138,.18);
+    color:#FFA7B2;
+    font-size:11px;
+    font-weight:800;
+  }
+  .chain-arrow{color:var(--muted);font-size:13px;font-weight:900;}
+  .out-scene{
+    position:relative;
+    text-align:center;
+    padding-top:2vh;
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(8px);
+    transition:opacity .3s ease,transform .3s ease,visibility .3s;
+  }
+  .out-scene.show{opacity:1;visibility:visible;transform:none;}
+  .out-stamp{
+    display:inline-block;
+    max-width:100%;
+    padding:18px 19px;
+    border-radius:22px;
+    color:#fff;
+    background:linear-gradient(135deg,#FF7A8A,#E85D70 45%,#FFA45C);
+    box-shadow:0 18px 40px rgba(255,122,138,.25),inset 0 2px 0 rgba(255,255,255,.3);
+    font-size:31px;
+    line-height:1.34;
+    font-weight:900;
+    letter-spacing:-.02em;
+    transform:rotate(-2.5deg);
+    text-shadow:0 2px 0 rgba(80,20,40,.2);
+  }
+  .out-stamp.play{animation:stampIn .5s cubic-bezier(.18,.9,.28,1.25) both;}
+  @keyframes stampIn{
+    0%{opacity:0;transform:scale(2.2) rotate(7deg);}
+    65%{opacity:1;transform:scale(.94) rotate(-3.2deg);}
+    100%{opacity:1;transform:scale(1) rotate(-2.5deg);}
+  }
+  .melon-p6{width:58px;height:58px;margin:26px auto 0;}
+  .out-sub{
+    max-width:320px;
+    margin:22px auto 0;
+    font-size:13.6px;
+    line-height:1.8;
+    color:var(--text);
+    font-weight:700;
+    text-align:center;
+  }
+
+  /* ---------- P7 ---------- */
+  .skip-row{display:flex;justify-content:flex-start;margin:-4px 0 10px;}
+  .sec-card{margin-bottom:11px;padding:15px 15px 14px;}
+  .rumor-card{border-left:3px solid var(--pink);background:linear-gradient(150deg,#332432,#2A2333);}
+  .evidence-card{border-left:3px solid var(--blue);}
+  .ok-card{background:linear-gradient(150deg,rgba(46,160,67,.12),#2A2333 68%);border-color:rgba(46,160,67,.18);}
+  .mid-card{background:linear-gradient(150deg,rgba(187,128,9,.10),#2A2333 68%);border-color:rgba(187,128,9,.16);}
+  .bad-card{background:linear-gradient(150deg,rgba(255,122,138,.10),#2A2333 68%);border-color:rgba(255,122,138,.16);}
+  .insight-card{background:linear-gradient(150deg,rgba(255,164,92,.10),#2A2333 68%);border-color:rgba(255,164,92,.16);}
+  .kw-card{background:linear-gradient(150deg,rgba(255,200,120,.08),#2A2333 68%);}
+  .kw-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .keyword{
+    background:var(--kw-bg);
+    border-radius:3px;
+    padding:0 2px;
+    color:var(--kw);
+    -webkit-box-decoration-break:clone;
+    box-decoration-break:clone;
+    transition:background .2s ease,color .2s ease,box-shadow .2s ease;
+  }
+  .kw-chip{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:8px;
+    border:1px solid rgba(255,200,120,.30);
+    font-size:12px;
+    line-height:1.45;
+    font-weight:800;
+    color:var(--kw);
+    background:rgba(255,200,120,.18);
+  }
+  .keyword.v-confirmed{
+    background:rgba(107,168,255,.22);
+    color:var(--blue);
+    box-shadow:0 0 0 1px rgba(107,168,255,.30);
+  }
+  .keyword.v-false{
+    background:rgba(255,122,138,.22);
+    color:var(--pink);
+    box-shadow:0 0 0 1px rgba(255,122,138,.30);
+  }
+  .keyword.revealed::after{
+    content:" · " attr(data-verdict);
+    font-size:.78em;
+    font-weight:700;
+    color:inherit;
+    opacity:.92;
+  }
+  .kw-chip.revealed::after{display:block;margin-top:2px;font-size:10px;line-height:1.35;}
+  .source-card{
+    margin-top:14px;
+    padding:14px 15px;
+    background:rgba(42,35,51,.9);
+  }
+  .source-link{
+    color:var(--blue);
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+    text-decoration:underline;
+    text-underline-offset:3px;
+    text-decoration-thickness:1px;
+  }
+  .source-link:hover{color:#8FBFFF;}
+
+  .magnifier{
+    position:fixed;
+    left:20px;
+    bottom:120px;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    border:2px solid rgba(107,168,255,.5);
+    background:rgba(107,168,255,.06);
+    pointer-events:none;
+    z-index:100;
+    display:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 10px 30px rgba(0,0,0,.5);
+    -webkit-backdrop-filter:blur(2px) saturate(1.1);
+    backdrop-filter:blur(2px) saturate(1.1);
+  }
+  .magnifier::before{
+    content:"";
+    position:absolute;
+    left:50%;top:50%;
+    width:18px;height:18px;
+    border:1px solid rgba(107,168,255,.22);
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+  }
+  .magnifier::after{
+    content:"";
+    position:absolute;
+    right:-25px;bottom:2px;
+    width:34px;height:9px;
+    border-radius:7px;
+    background:linear-gradient(90deg,rgba(107,168,255,.7),rgba(107,168,255,.3));
+    transform:rotate(45deg);
+    box-shadow:0 3px 6px rgba(0,0,0,.3);
+  }
+  .verdict-bubble{
+    position:fixed;
+    pointer-events:none;
+    z-index:101;
+    display:none;
+    transform:translate(-50%,-100%);
+    background:#201925;
+    color:var(--text);
+    padding:7px 10px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);
+    font-size:11.5px;
+    line-height:1.45;
+    font-weight:700;
+    max-width:230px;
+    box-shadow:0 9px 22px rgba(0,0,0,.5);
+    transition:opacity .15s ease;
+  }
+  .verdict-bubble.show{display:block;}
+  .verdict-bubble.v-confirmed{border-color:rgba(107,168,255,.5);}
+  .verdict-bubble.v-false{border-color:rgba(255,122,138,.5);}
+  .verdict-bubble::after{
+    content:"";
+    position:absolute;
+    left:50%;bottom:-5px;
+    transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:#201925;
+    border-bottom:0;
+  }
+  .melon-p7-cursor{
+    position:fixed;
+    z-index:99;
+    display:none;
+    width:40px;height:40px;
+    left:20px;top:calc(100dvh - 220px);
+  }
+  .melon-p7-cursor .melon-prop{
+    opacity:1;
+    transform:scale(1) rotate(-8deg);
+  }
+
+  /* ---------- P8 ---------- */
+  .recap-card{margin-bottom:11px;padding:16px;background:linear-gradient(150deg,#332B3E,#2A2333);}
+  .recap-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:7px;}
+  .recap-label{font-size:10px;font-weight:800;color:var(--muted);}
+  .recap-card h3{margin:0;font-size:15.5px;line-height:1.55;font-weight:900;color:var(--text);}
+  .timeline{position:relative;padding-left:23px;}
+  .timeline::before{
+    content:"";
+    position:absolute;
+    left:6px;top:5px;bottom:20px;
+    width:2px;
+    border-radius:2px;
+    background:linear-gradient(var(--pink),var(--orange) 55%,var(--blue));
+  }
+  .tl-item{position:relative;margin-bottom:12px;}
+  .tl-item:last-child{margin-bottom:6px;}
+  .tl-item::before{
+    content:"";
+    position:absolute;
+    left:-22px;top:4px;
+    width:10px;height:10px;
+    border-radius:50%;
+    background:var(--bg0);
+    border:2.5px solid var(--pink);
+    box-shadow:0 0 0 2px rgba(255,122,138,.1);
+  }
+  .tl-text{font-size:12.8px;line-height:1.65;color:var(--text);margin:0;}
+  .melon-p8{width:42px;height:42px;margin:-2px 0 0 auto;transform:rotate(6deg);}
+  .review-card{
+    padding:17px;
+    background:linear-gradient(155deg,rgba(255,122,138,.10),#2A2333 65%);
+    border-color:rgba(255,122,138,.18);
+    margin-bottom:11px;
+  }
+  .review-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    margin-bottom:9px;
+    padding:4px 9px;
+    border-radius:999px;
+    background:rgba(255,122,138,.11);
+    color:#FFA7B2;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.08em;
+  }
+  .review-text{margin:0;font-size:13.6px;line-height:1.88;color:var(--text);font-weight:600;}
+  .qs-list{display:flex;flex-direction:column;gap:10px;}
+  .qs-item{display:flex;gap:10px;align-items:flex-start;}
+  .qs-num{
+    flex:none;
+    width:22px;height:22px;
+    border-radius:8px;
+    background:linear-gradient(135deg,#FF9AA8,#FF7A8A);
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+    display:grid;place-items:center;
+    box-shadow:0 3px 7px rgba(255,122,138,.24);
+  }
+  .qs-q{font-size:12.5px;font-weight:900;color:var(--text);margin:0 0 2px;}
+  .qs-a{font-size:11.5px;line-height:1.6;color:var(--muted);margin:0;}
+
+  /* ---------- P9 ---------- */
+  .end-wrap{text-align:center;padding:4vh 4px 2vh;}
+  .end-art{position:relative;width:220px;height:180px;margin:0 auto 16px;}
+  .end-art .melon-big{
+    position:absolute;left:27px;bottom:12px;
+    font-size:92px;line-height:1;
+    filter:drop-shadow(0 18px 22px rgba(255,122,138,.22));
+    animation:floaty 4.5s ease-in-out infinite;
+  }
+  .end-art .lens-big{
+    position:absolute;right:16px;bottom:30px;
+    font-size:62px;line-height:1;
+    transform:rotate(-14deg);
+    filter:drop-shadow(0 12px 16px rgba(107,168,255,.22));
+    animation:floaty 5.4s ease-in-out infinite reverse;
+  }
+  .end-art .halo{
+    position:absolute;left:34px;top:17px;
+    width:148px;height:148px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,122,138,.16),transparent 68%);
+    filter:blur(5px);
+  }
+  .spark{position:absolute;font-size:17px;opacity:.75;}
+  .s1{left:9px;top:31px;color:var(--orange);animation:twinkle 2.8s ease-in-out infinite;}
+  .s2{right:8px;top:14px;color:var(--blue);animation:twinkle 3.4s ease-in-out infinite .4s;}
+  .s3{left:103px;bottom:8px;color:var(--pink);animation:twinkle 3s ease-in-out infinite .8s;}
+  @keyframes floaty{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-9px) rotate(2deg);}}
+  @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8);}50%{opacity:.9;transform:scale(1.12);}}
+  .end-title{
+    margin:0 auto;
+    max-width:330px;
+    font-size:23px;
+    line-height:1.55;
+    font-weight:900;
+    color:var(--text);
+    letter-spacing:-.01em;
+  }
+  .end-small{margin:16px 0 0;font-size:11.5px;color:var(--muted);letter-spacing:.04em;}
+
+  /* ---------- modals ---------- */
+  .modal{
+    position:absolute;
+    inset:0;
+    z-index:90;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(27,18,32,.78);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+  }
+  .modal.show{display:flex;}
+  .modal-card{
+    width:100%;
+    max-width:340px;
+    padding:22px 20px 19px;
+    border-radius:22px;
+    background:linear-gradient(165deg,#352C40,#2A2333);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);
+    text-align:center;
+    animation:modalPop .25s cubic-bezier(.2,.8,.3,1) both;
+  }
+  @keyframes modalPop{from{opacity:0;transform:translateY(13px) scale(.96);}to{opacity:1;transform:none;}}
+  .modal-card h3{
+    margin:0 0 8px;
+    font-size:20px;
+    line-height:1.4;
+    font-weight:900;
+    color:var(--text);
+  }
+  .modal-card p{
+    margin:0 0 17px;
+    font-size:13.5px;
+    line-height:1.75;
+    color:var(--text);
+  }
+  .toast-card{padding-bottom:24px;}
+  .toast-emoji{font-size:36px;line-height:1;margin-bottom:9px;}
+  .toast-card h3{font-size:21px;margin-bottom:7px;}
+  .toast-track{
+    height:4px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    overflow:hidden;
+    margin-top:4px;
+  }
+  .toast-track i{
+    display:block;
+    width:100%;height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--pink),var(--orange));
+    transform-origin:left center;
+  }
+  @keyframes toastCount{from{transform:scaleX(1);}to{transform:scaleX(0);}}
+
+  /* ---------- reduced motion ---------- */
+  html.reduce-motion *,
+  html.reduce-motion *::before,
+  html.reduce-motion *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+
+  @media (max-height:700px){
+    .gacha-area{height:clamp(240px,42dvh,340px);}
+    .gacha-area.shrunk{height:clamp(160px,24dvh,200px);}
+    .p0-title h1{margin-top:8px;}
+  }
+  @media (max-height:620px){
+    .page-scroll.p0{padding-top:calc(48px + env(safe-area-inset-top));}
+    .gacha-area{padding-top:28px;}
+    .p0-title h1{margin-top:4px;}
+    .pick-prompt{font-size:24px;margin:8px 0 12px;}
+  }
+  @media (max-width:359px){
+    .action-row{flex-direction:column;align-items:center;}
+    .action-row .btn{width:min(80vw,320px);max-width:none;flex:0 0 auto;}
+    .page-title{font-size:20px;}
+    .event-title{font-size:18px;}
+    .out-stamp{font-size:27px;}
+    .page-scroll{padding-left:14px;padding-right:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app" data-page="P0">
+  <div class="global-tools" aria-label="偏好设置">
+    <button class="tool-btn" id="btnSound" type="button" aria-label="开启音效" title="音效已关闭">🔇</button>
+    <button class="tool-btn" id="btnMotion" type="button" aria-label="开启弱动效" title="动效已开启">🎞️</button>
+  </div>
+
+  <!-- ================= P0 ================= -->
+  <section class="page active" data-page="P0" id="pageP0">
+    <div class="page-scroll p0" id="p0Scroll">
+      <div class="p0-wrap">
+        <header class="p0-title">
+          <div class="eyebrow">互动辟谣 · 深夜瓜田</div>
+          <h1>🍉吃瓜识谣<em>扭蛋机</em></h1>
+        </header>
+        <div class="gacha-area" id="gachaArea">
+          <div class="gacha-wrap" id="gachaWrap">
+            <div class="melon melon-p0 happy" id="melonP0" aria-hidden="true">
+              <span class="melon-sprout"></span><span class="melon-leaf"></span>
+              <span class="melon-eye left"></span><span class="melon-eye right"></span>
+              <span class="melon-mouth"></span>
+              <span class="melon-hand left"></span><span class="melon-hand right"></span>
+            </div>
+            <div class="gacha" id="gacha" aria-hidden="true">
+              <div class="dome">
+                <div class="balls">
+                  <span class="ball b1"></span><span class="ball b2"></span><span class="ball b3"></span>
+                  <span class="ball b4"></span><span class="ball b5"></span><span class="ball b6"></span>
+                  <span class="ball b7"></span><span class="ball b8"></span><span class="ball b9"></span>
+                </div>
+              </div>
+              <div class="machine-body">
+                <span class="knob"></span>
+                <span class="machine-label">吃瓜</span>
+                <span class="slot"></span>
+              </div>
+              <div class="gacha-base"></div>
+              <div class="egg" id="egg"><span>🍉</span></div>
+              <div class="flash" id="flash"></div>
+            </div>
+          </div>
+        </div>
+        <p class="pick-prompt">请选取今日大瓜</p>
+        <div class="draw-card" id="drawCard" aria-live="polite"></div>
+        <div class="p0-actions">
+          <div class="action-area">
+            <button class="btn btn-primary single" id="btnDraw" type="button">抽取</button>
+            <div class="action-row" id="drawRow" hidden>
+              <button class="btn btn-ghost" id="btnRedraw" type="button">再抽一次</button>
+              <button class="btn btn-primary" id="btnEnter" type="button">进入</button>
+            </div>
+          </div>
+        </div>
+        <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= P1 ================= -->
+  <section class="page" data-page="P1" id="pageP1">
+    <div class="page-scroll pad-double">
+      <div class="topbar">
+        <button class="icon-btn" id="btnBackHome" type="button" aria-label="返回首页">←</button>
+        <span class="topbar-title">热搜现场</span>
+      </div>
+      <div class="hot-row">
+        <span class="hot-badge" id="p1Hot">🔥 热搜</span>
+        <span class="hot-sub">网传内容 · 待核实</span>
+      </div>
+      <article class="card event-card">
+        <div class="event-meta">
+          <span class="tag" id="p1Tag">【网传大瓜·食品安全】</span>
+          <span class="tag tag-blue">#今日大瓜</span>
+        </div>
+        <h2 class="event-title" id="p1Title"></h2>
+        <p class="event-summary" id="p1Summary"></p>
+        <div class="melon melon-p1" id="melonP1" aria-hidden="true">
+          <span class="melon-sprout"></span><span class="melon-leaf"></span>
+          <span class="melon-eye left"></span><span class="melon-eye right"></span>
+          <span class="melon-mouth"></span>
+          <span class="melon-hand left"></span><span class="melon-hand right"></span>
+          <span class="melon-prop">📣</span>
+        </div>
+      </article>
+      <p class="p1-footnote">先别急着相信，也别急着转发。</p>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <div class="action-row">
+          <button class="btn btn-ghost" id="btnFake" type="button">太假了，我不信</button>
+          <button class="btn btn-primary" id="btnNext" type="button">然后呢？继续吃瓜（模拟转发）</button>
+        </div>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P2 ================= -->
+  <section class="page" data-page="P2" id="pageP2">
+    <div class="page-scroll">
+      <div class="topbar">
+        <span class="step-pill">判断 · 1/3</span>
+        <span class="topbar-title">选择你的猜测</span>
+      </div>
+      <h2 class="page-title">🤔 网上冒出几种猜测，你更相信哪一个？</h2>
+      <p class="page-hint">不同猜测，会走向完全不一样的舆论结局</p>
+      <div class="guess-wrap" id="guessWrap">
+        <div class="guess-list" id="guessList"></div>
+        <div class="melon melon-p2 p2-looking" id="melonP2" aria-hidden="true">
+          <span class="melon-sprout"></span><span class="melon-leaf"></span>
+          <span class="melon-eye left"></span><span class="melon-eye right"></span>
+          <span class="melon-mouth"></span>
+        </div>
+        <div class="guess-bubble" id="guessBubble">你选了这条，后面群里就会照着这个方向吵</div>
+      </div>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <button class="btn btn-primary single" id="btnConfirmGuess" type="button" disabled>确认选择这个猜测</button>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P3 ================= -->
+  <section class="page" data-page="P3" id="pageP3">
+    <div class="page-scroll">
+      <div class="topbar">
+        <span class="step-pill">发酵 · 2/3</span>
+        <span class="topbar-title">评论区实时更新</span>
+      </div>
+      <div class="forward-bar">本群已转发 <strong id="forwardCount">0</strong> 次</div>
+      <h2 class="page-title">🔥 消息开始传开了，群聊、评论区是这样的</h2>
+      <p class="page-hint">消息正一条条冒出来，手动上滑查看，不会自动跳到底部。</p>
+      <div class="chat-wrap" id="chatWrap">
+        <div class="melon melon-p3 p3-peek" id="melonP3" aria-hidden="true">
+          <span class="melon-sprout"></span><span class="melon-leaf"></span>
+          <span class="melon-eye left"></span><span class="melon-eye right"></span>
+          <span class="melon-mouth"></span>
+        </div>
+        <div class="chat-list" id="p3List" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <button class="btn btn-primary single" id="btnP3Next" type="button">继续看后续（下一步：再次判断）</button>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P4 ================= -->
+  <section class="page" data-page="P4" id="pageP4">
+    <div class="page-scroll pad-double">
+      <div class="topbar">
+        <span class="step-pill">再判断 · 3/3</span>
+        <span class="topbar-title">舆论走向</span>
+      </div>
+      <h2 class="page-title">⚠️ 看到这些发酵评论，你现在怎么选？</h2>
+      <p class="page-hint">很多人会跟着群里的说法继续转发，你的选择决定舆论走向</p>
+      <div class="card nudge-card">
+        <div class="nudge-emoji">📣</div>
+        <p>群聊里已经有人@你：“真的假的？你转我就信。”</p>
+        <div class="melon melon-p4 nervous scared" id="melonP4" aria-hidden="true">
+          <span class="melon-sprout"></span><span class="melon-leaf"></span>
+          <span class="melon-eye left"></span><span class="melon-eye right"></span>
+          <span class="melon-mouth"></span>
+          <span class="melon-alert">!</span>
+        </div>
+      </div>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <div class="action-row">
+          <button class="btn btn-blue" id="btnStop" type="button">不信了，停止传播</button>
+          <button class="btn btn-orange" id="btnSpread" type="button">我信，继续转发</button>
+        </div>
+        <div class="spread-flash" id="spreadFlash" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P5 ================= -->
+  <section class="page" data-page="P5" id="pageP5">
+    <div class="page-scroll">
+      <div class="topbar">
+        <span class="step-pill">失控</span>
+        <span class="topbar-title">扩散监测中</span>
+      </div>
+      <h2 class="page-title">💥 谣言持续扩散，局面失控了</h2>
+      <div class="chaos-meter"><span></span></div>
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-track">
+          <span>群聊刷屏</span><span>本地热搜</span><span>营销号搬运</span><span>情绪升级</span>
+          <span>群聊刷屏</span><span>本地热搜</span><span>营销号搬运</span><span>情绪升级</span>
+        </div>
+      </div>
+      <article class="card chaos-card">
+        <div class="chaos-head"><span>🔥 扩散热度 99%</span><span>已失控</span></div>
+        <div id="p5Segments"></div>
+      </article>
+    </div>
+    <div class="melon melon-p5 p5-peek" id="melonP5" aria-hidden="true">
+      <span class="melon-sprout"></span><span class="melon-leaf"></span>
+      <span class="melon-eye left"></span><span class="melon-eye right"></span>
+      <span class="melon-mouth"></span>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <button class="btn btn-primary single" id="btnP5Next" type="button" disabled>继续</button>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P6 ================= -->
+  <section class="page" data-page="P6" id="pageP6">
+    <div class="page-scroll">
+      <div class="topbar">
+        <span class="step-pill">反馈</span>
+        <span class="topbar-title">传播链路已记录</span>
+      </div>
+      <div class="chain-preview" id="chainPreview">
+        <div class="chain-label">传播链缩略图</div>
+        <div class="chain-line">
+          <span class="chain-chip">你</span><span class="chain-arrow">→</span>
+          <span class="chain-chip">群</span><span class="chain-arrow">→</span>
+          <span class="chain-chip">热搜</span><span class="chain-arrow">→</span>
+          <span class="chain-chip">网暴/抢购/骗捐</span>
+        </div>
+      </div>
+      <div class="out-scene" id="outScene">
+        <div class="out-stamp" id="p6Big"></div>
+        <div class="melon melon-p6 sad" id="melonP6" aria-hidden="true">
+          <span class="melon-sprout"></span><span class="melon-leaf"></span>
+          <span class="melon-eye left"></span><span class="melon-eye right"></span>
+          <span class="melon-mouth"></span>
+          <span class="melon-sign">OUT</span>
+        </div>
+        <p class="out-sub" id="p6Sub">没有核验来源和证据，随手转发，就会成为谣言的推手。</p>
+      </div>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <button class="btn btn-primary single" id="btnP6Next" type="button" disabled>申请查看事情真相</button>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P7 ================= -->
+  <section class="page" data-page="P7" id="pageP7">
+    <div class="page-scroll" id="p7Scroll">
+      <div class="topbar">
+        <span class="step-pill">核查</span>
+        <span class="topbar-title">事实核查中</span>
+      </div>
+      <h2 class="page-title">🔍 事实核查 · 权威辟谣</h2>
+      <p class="page-hint">浅黄关键词可以用放大镜扫过；不想互动，也可以直接看结论。</p>
+      <div class="skip-row">
+        <button class="link-btn" id="btnRevealAll" type="button">跳过交互，直接查看结论</button>
+      </div>
+      <div id="p7Body"></div>
+      <div id="p7Source"></div>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <button class="btn btn-primary single" id="btnP7Next" type="button">查看原事件真相</button>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P8 ================= -->
+  <section class="page" data-page="P8" id="pageP8">
+    <div class="page-scroll pad-double">
+      <div class="topbar">
+        <span class="step-pill">复盘</span>
+        <span class="topbar-title">真相档案</span>
+      </div>
+      <h2 class="page-title">📌 事件完整真相复盘</h2>
+      <div id="p8Body"></div>
+    </div>
+    <div class="action-dock">
+      <div class="action-area">
+        <div class="action-row">
+          <button class="btn btn-ghost" id="btnAgain" type="button">再玩一次</button>
+          <button class="btn btn-primary" id="btnEnd" type="button">结束体验</button>
+        </div>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= P9 ================= -->
+  <section class="page" data-page="P9" id="pageP9">
+    <div class="page-scroll end">
+      <div class="end-wrap">
+        <div class="end-art" aria-hidden="true">
+          <div class="halo"></div>
+          <div class="melon-big">🍉</div>
+          <div class="lens-big">🔍</div>
+          <span class="spark s1">✦</span>
+          <span class="spark s2">✦</span>
+          <span class="spark s3">✦</span>
+        </div>
+        <h2 class="end-title">下次吃瓜前，先看来源、证据和情绪。</h2>
+        <p class="end-small">体验结束，你可以关闭页面啦</p>
+      </div>
+    </div>
+    <div class="page-foot">案例均为虚构或基于公开报道改编，仅用于谣言辨别练习。</div>
+  </section>
+
+  <!-- ================= modals ================= -->
+  <div class="modal" id="modalHail" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="hailTitle">
+      <h3 id="hailTitle">⚠️离谱不等于假</h3>
+      <p>离谱不等于假。先看来源和证据。</p>
+      <button class="btn btn-primary btn-block" id="btnHailOk" type="button">我明白了，去核验</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalToast" aria-hidden="true">
+    <div class="modal-card toast-card" role="status" aria-live="assertive">
+      <div class="toast-emoji" id="toastEmoji">🕊️</div>
+      <h3 id="toastTitle"></h3>
+      <p id="toastBody"></p>
+      <div class="toast-track"><i id="toastBar"></i></div>
+    </div>
+  </div>
+
+  <div class="magnifier" id="magnifier"></div>
+  <div class="verdict-bubble" id="verdictBubble"></div>
+  <div class="melon melon-p7-cursor" id="melonP7Cursor" aria-hidden="true">
+    <span class="melon-sprout"></span><span class="melon-leaf"></span>
+    <span class="melon-eye left"></span><span class="melon-eye right"></span>
+    <span class="melon-mouth"></span>
+    <span class="melon-prop">🔍</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const LINKS = {
+    wildVeg: "http://big5.cctv.com/gate/big5/news.cctv.com/2026/05/19/ARTI8Acg2L90CuzthvitSI1S260519.shtml",
+    rewardScript: "https://news.cctv.cn/2025/12/08/ARTIXunjR39GIKGuBBLwXOLl251208.shtml",
+    hailstorm: "http://piyao.org.cn/20250305/3b0663ad741547f7aa3d7f60f9cb03bf/c.html"
+  };
+
+  const PREF_KEY = "chigua_shi_yao_prefs_v1";
+
+  const THREE_QS = [
+    { q: "来源是谁？", a: "先找发布者、发布时间和原始出处。" },
+    { q: "证据在哪？", a: "有没有可核验的证据，或权威部门的公开通报？" },
+    { q: "情绪被放大了吗？", a: "越让你愤怒、感动或恐慌，越要先停下来。" }
+  ];
+
+  const EVENTS = {
+    wildVeg: {
+      id: "wildVeg",
+      type: "false",
+      tag: "食品安全",
+      p0Tag: "【网传大瓜·食品安全】",
+      title: "博主称在城郊农贸市场买到‘毒野菜’，脸部严重红肿，提醒全城禁买",
+      opening: "博主‘阿菜’发布一条47秒视频。前30秒是自拍：脸部红肿、眼睛眯成缝，手里举着一把叶片狭长、边缘锯齿的‘香椿’。画外音急促：‘在城郊农贸市场买的，回家炒鸡蛋，吃完脸就成这样了。摊贩说这是头茬香椿，我闻着也对，谁知道是漆树芽。’画面里，脸部红肿明显，但脖子和手背的肤色看起来和平时没什么两样。后17秒是菜市场远景，镜头晃动，配文‘大家最近别去这家’。视频发布6小时内被转到300多个本地群，同城热搜出现‘#菜市场毒香椿#’。评论区最高赞是‘已转发家族群，我妈明天本来要去买’。当晚，一个自称‘同市场受害者’的账号在评论区留言，说自己上周也买到过同样的野菜，配图是一把几乎一样的绿叶菜。这条评论被顶到第二，阿菜回复了一个‘握手’表情。第二天上午，视频播放量突破800万，本地两个生活号开始跟进‘实地探访’。",
+      guesses: [
+        { id: "A", text: "市场管理方监管不到位，长期放任摊贩用漆树芽冒充香椿卖", truthLevel: "false" },
+        { id: "B", text: "周边农户为了省成本，把漆树芽混进香椿里批发给摊贩", truthLevel: "false" },
+        { id: "C", text: "视频画面有点怪，红肿像是特效做的，不像真的过敏", truthLevel: "partial" }
+      ],
+      comments: {
+        A: ["已打12345，接线员说会转市场监管", "我亲戚就在那个市场，说早有人反映过", "明天去现场拍，谁拦我我就直播", "这种市场就该封，查一个关一个", "刚看了，那个摊位已经空了，肯定是跑了", "监管部门平时都在干嘛？出了事才来", "已转发五个群，让大家都别去"],
+        B: ["查一下给这个摊位供货的是谁", "肯定是上游农户图便宜混的", "把供货商的店名扒出来", "我二舅就在附近种菜，他说最近确实有人来收便宜货", "这种事不是第一次了，去年就有过", "建议查进货渠道，肯定能查到人", "已截图发到村群里，让大家小心"],
+        C: ["第三秒，脸和脖子交界处有像素块", "手指弯曲角度不对", "别洗了，你收了商贩多少钱", "我放大了看，耳朵边缘也是糊的", "你们看第12秒，脖子颜色和脸完全不一样", "就算是演的，市场卖毒菜也该查吧", "坐等博主回应，不回应就是心虚"]
+      },
+      spread: {
+        wildVeg_false: [
+          "市场门口聚了十几个人，有人举着手机直播‘毒香椿现场’，有人把整筐香椿倒在地上踩。周边三个村的菜农被当成‘投毒嫌疑人’，一辆送菜三轮车被拦下，车主解释了半天没人听。",
+          "同城群里开始转‘检测试纸’链接，9.9元一张，销量过千。一个自称‘皮肤科医生’的账号在评论区卖‘排毒膏’，配文‘AI都做不出这种肿’。",
+          "阿菜的粉丝一夜涨了8万，置顶评论是：‘明天直播去市场讨说法，不见不散。’"
+        ]
+      },
+      fact: {
+        rumor: "博主‘买到漆树芽中毒’为AI特效伪造+摆拍。",
+        evidence: "红肿画面为特效生成；无市场监管通报支持‘该市场售卖漆树芽’；漆树芽含漆酚可致过敏，但‘这个具体事件’是编的。",
+        confirmed: "漆树芽含漆酚，接触/误食可引发过敏，严重可致喉头水肿。",
+        falseClaim: "‘市场长期售毒’‘农户混卖致中毒’‘无解药致死’均无权威来源；‘中毒’本身是AI画面。",
+        insight: "风险真实不等于这个事件真实。",
+        keywords: [
+          { text: "AI特效", verdict: "不实：红肿为AI生成" },
+          { text: "漆树芽", verdict: "已证实：含漆酚可致过敏" },
+          { text: "监管", verdict: "未证实：无市场监管通报" },
+          { text: "无解药", verdict: "不实：无权威来源" }
+        ],
+        source: { name: "央视网", title: "眉山：用AI特效扮“中毒”编造谣言，男子被依法处罚" }
+      },
+      review: {
+        timeline: [
+          "47秒视频发布，6小时内被转到300多个本地群",
+          "同城热搜出现‘#菜市场毒香椿#’，市场门口聚集直播",
+          "周边菜农被误认，检测试纸与‘排毒膏’借势热卖",
+          "核查确认：红肿为AI特效生成，事件为摆拍"
+        ],
+        distortion: "真实风险（漆树芽含漆酚）→ 被嫁接成虚构的‘中毒’事件 → 再变形为‘市场售毒’‘农户混卖’的猜测。",
+        personal: {
+          "false": "你顺着谣言往下猜了监管失职或农户混卖。这两个方向都没有官方通报支持，视频里的‘中毒’是AI特效。漆树芽过敏是真的，但这个具体事件是编的。你被‘不是第一次’和‘摊贩说是头茬’推着走了一步，而造谣者要的正是这一步。",
+          partial: "你注意到画面不对劲，方向对了。真相不只是‘演’，连红肿都是AI生成的。你离识破只差一步：把‘画面可疑’变成‘先搜有没有警方通报’。",
+          "true": "你选择了最接近核查的方向。"
+        }
+      }
+    },
+
+    rewardScript: {
+      id: "rewardScript",
+      type: "false",
+      tag: "正能量",
+      p0Tag: "【网传大瓜·正能量】",
+      title: "女子海边溺水被陌生小哥救起，悬赏20万寻恩人",
+      opening: "女主播‘小霏’在海边自拍，头发湿漉，眼眶通红。她说三天前在同一片海域溺水，一个穿灰色T恤的年轻男子把她拖上岸，没留名字就走了。她展示一张手写‘寻人启事’：‘恩人特征：左眉尾有疤，说话带北方口音。’视频结尾她提高音量：‘20万，说到做到，只求当面说声谢谢。’第一条点赞破50万，第二条‘线索征集’隔天发出，评论区开始有人自称‘知情人’。第三天，小霏发了一条新视频，说有人加她微信，自称是救人小哥，但要求先转5万‘诚意金’才肯见面。她在视频里红着眼眶说：‘我不怕花钱，就怕他不是真的。’这条视频点赞更高，评论区彻底炸了，有人说‘小哥被中间人控制了’，有人说‘这就是剧本’。",
+      guesses: [
+        { id: "A", text: "要5万诚意金的人就是真小哥，他怕被网暴、被骚扰，所以先要钱自保", truthLevel: "false" },
+        { id: "B", text: "地方不想让这件事火，压着不表彰，所以小哥不敢露面", truthLevel: "false" },
+        { id: "C", text: "一天更新一条，每条都有新线索，太像写好的剧本了", truthLevel: "partial" }
+      ],
+      comments: {
+        A: ["小哥要钱也正常，现在网暴多可怕", "他要5万可能就是想确认主播是不是真的", "换我我也怕，先拿钱再露面没毛病", "主播要不就先转吧，万一是真的呢", "这年头好人难做，要钱自保可以理解", "但万一是骗子呢，主播也得留个心眼", "我朋友说在附近看到过类似的人，要不要联系主播"],
+        B: ["这种事为什么不宣传", "本地就这样，好人难做", "宣传口的人出来走两步", "别的城市救人都上央视了，我们这连个通报都没有", "是不是怕对比出救援不力", "已@本地媒体，没人回", "越不宣传越说明有问题"],
+        C: ["第一条视频里救生员就在背景里站着", "她哭的时候眼睛一直在瞟提词器", "坐等反转", "一天一条，比电视剧还准时", "寻人启事那个字迹，和主播之前手写的字体一模一样", "海边镜头里连个浪都没有，溺水是怎么溺的", "就算是剧本，能帮到真人也行吧"]
+      },
+      spread: {
+        rewardScript_false: [
+          "评论区开始有人支持主播‘先转5万’，说‘好人不能寒心’。有人发起‘诚意金众筹’，说凑够5万让小哥现身。一个与事件无关的普通男子因为左眉有疤，被截图挂上热搜，电话被打爆，单位门口有人蹲守。",
+          "小霏的账号橱窗悄悄上架了‘海边防晒’和‘急救包’，销量不错。同城主播组团去‘溺水海域’直播，有人往水里扔假花，配文‘致敬无名英雄’。",
+          "一个自称‘小哥工友’的账号连开三场直播，收了两万多打赏，最后说‘小哥不想被打扰’，注销跑路。那个要5万的人再也没有出现过，真正的救人小哥是否存在，已经没人关心了。"
+        ]
+      },
+      fact: {
+        rumor: "‘溺水女子’‘救命恩人’‘20万悬赏’‘5万诚意金’均为剧本设定。",
+        evidence: "系列视频为摆拍；‘诚意金’‘压事’‘捐款’均为剧情设计；无真实溺水事件对应。",
+        confirmed: "存在摆拍‘寻恩人’系列视频起号牟利的案例。",
+        falseClaim: "该具体视频中的溺水、5万诚意金、地方压事、捐款救治均无真实事件对应。",
+        insight: "感动是最容易被利用的情绪。越让你想帮转的内容，越要先看发布者是不是在起号。",
+        keywords: [
+          { text: "20万", verdict: "不实：悬赏为剧本设定" },
+          { text: "5万诚意金", verdict: "不实：剧情设计" },
+          { text: "摆拍", verdict: "已证实：系列视频为摆拍" },
+          { text: "起号", verdict: "已证实：目的为吸粉带货" }
+        ],
+        source: { name: "央视网", title: "整治“自媒体”乱象 向“为博流量制造的虚假谣言”说不！" }
+      },
+      review: {
+        timeline: [
+          "‘寻恩’视频发布，悬赏20万找救命恩人",
+          "线索征集、众筹、直播接连出现",
+          "无关男子被误认，账号橱窗与打赏开始变现",
+          "核查确认：系列视频为剧本摆拍，目的是起号带货"
+        ],
+        distortion: "一个‘寻恩’剧本 → 被当成真实事件 → 衍生出‘诚意金’‘压事’‘捐款’等剧情。",
+        personal: {
+          "false": "你相信了‘救人事件为真’这个前提，甚至在‘要钱自保’和‘被压不表彰’之间选了一个解释。但真相是这个前提本身不存在：溺水女子和救命恩人都是人设，系列视频是剧本，‘5万诚意金’也是剧情设计。你付出的同情是真的，但剧本从一开始就知道结局。",
+          partial: "你怀疑它是摆拍，方向对了。真相比‘摆拍’更完整：有脚本、有演员、系列剧情，目的是起号后带货。你没有直接相信剧情，已经比大多数转发者多走了一步。",
+          "true": "你选择了最接近核查的方向。"
+        }
+      }
+    },
+
+    hailstorm: {
+      id: "hailstorm",
+      type: "realEvent",
+      tag: "灾情",
+      p0Tag: "【网传大瓜·灾情】",
+      title: "昨晚冰雹‘大如鸡蛋砸垮房屋’？群聊炸了，有人说是人工增雨打歪了",
+      opening: "当地确实下了冰雹。气象部门下午4点发布强对流预警，部分乡镇出现直径1—2厘米冰雹，有车辆和作物受损。但两小时后，群聊里开始流传另一组图：冰雹堆在路边，旁边放一部手机作对比，冰雹比手机还长；另一张图里冰雹把面包车车顶砸出凹坑。配文：‘鸡蛋大？保守了，这得有拳头大。气象局提前知道为什么不报？’同时，一张看不出时间地点的雷达图被反复转发，红得发紫，配文‘自己看’。当地气象部门在官方账号发了一条简短回应：‘本次冰雹为强对流天气自然形成，预警已于当日16时发布。’但这条回应很快被截图，配上了‘气象局甩锅天气’的标题，转发量是原回应的十倍。群里有人跟了一句：‘预警发了？我手机怎么没响？’",
+      guesses: [
+        { id: "A", text: "网上那些夸张图是旧图或AI图，真实灾情没那么严重，等官方统计", truthLevel: "true" },
+        { id: "B", text: "气象局早就知道，但怕引起恐慌/影响活动，故意不把预警发到每个人手机上", truthLevel: "false" },
+        { id: "C", text: "图都摆在这了，冰雹就是比鸡蛋大，灾情比通报的严重得多", truthLevel: "false" }
+      ],
+      comments: {
+        A: ["那个手机对比图我去年就见过", "这图明显是AI的，光影不对", "官方说1—2厘米，图里那个起码5厘米，肯定有问题", "理性讨论，别传旧图", "我家大棚被砸了，确实有损失，但没网上说的那么夸张", "人工增雨不会造成冰雹，这是常识", "希望大家别传谣，等官方统计"],
+        B: ["果然又是瞒报", "气象局出来走两步", "以后红色预警我也不信了", "我手机根本没收到预警，邻居也没收到", "为什么别的县收到了我们没收到", "这种事不是第一次了，去年暴雨也是", "已截图，等一个说法"],
+        C: ["这冰雹比鸡蛋大多了", "我朋友车被砸了，保险能赔吗", "有没有靠谱的防雹网推荐", "官方说1—2厘米，这图里起码5厘米", "我家房顶瓦片碎了一半，统计的人还没来", "别信轻描淡写，自己看图", "有没有人组织一下，一起去要说法"]
+      },
+      spread: {
+        hailstorm_trueSpread: [
+          "你转发的是‘那些夸张图是旧图/AI图’这个正确判断，但配文写成了‘气象局终于回应了’。评论区开始吵架：‘早干嘛去了’‘又甩锅给天气’。",
+          "一个卖‘抗灾保险’的账号在每条冰雹视频下留言，说‘极端天气会越来越多，现在不买以后更贵’。另一个自称‘农业专家’的人开直播，背景是一张AI生成的‘雹灾田’，小黄车挂着‘救灾特效肥’。",
+          "正确的判断被做成短视频切片，配上了紧张的音乐，看起来比谣言还像谣言。"
+        ],
+        hailstorm_falseSpread: [
+          "‘隐瞒预警’冲上本地热搜，气象局值班电话一直占线。有人把工作人员一句‘消雹是增雨’剪成15秒短视频，标题写‘气象局承认人工干预’。",
+          "周边两个乡镇的农户拒绝签人工防雹作业同意书，说‘越防越下，谁知道你们往云里打什么’。AI生成的‘鸡蛋大冰雹’图被拿去配‘灾情被压低’的文案，一个骗捐链接在群里转了上百次，有人晒出转账截图说‘尽一点心意’。",
+          "没有人再讨论真实的1—2厘米冰雹。"
+        ]
+      },
+      fact: {
+        confirmed: "当地确实出现冰雹；强对流自然形成；人工增雨不会造成冰雹；消雹/防雹的原理是抑制冰雹增长、化雹为雨，不是制造冰雹。",
+        unconfirmed: "‘预警被故意压下’‘某活动导致消雨’无权威来源。",
+        falseClaim: "‘人工增雨打歪成冰雹’‘冰雹比鸡蛋还大砸垮房屋’中的AI夸大图片、‘灾情被严重低估’的恐慌叙事，均无权威核查支持。",
+        insight: "专业误解比纯瞎编更难识别。‘消雹其实是在增雨’恰恰和‘人工增雨造成冰雹’的直觉相反。",
+        keywords: [
+          { text: "人工增雨", verdict: "已证实：不会造成冰雹" },
+          { text: "消雹", verdict: "已证实：抑制冰雹增长，化雹为雨" },
+          { text: "隐瞒预警", verdict: "未证实：无权威来源" },
+          { text: "鸡蛋大", verdict: "不实：AI夸大图片" }
+        ],
+        source: { name: "中国互联网联合辟谣平台", title: "广东多地下冰雹，警惕AI制图夸大灾情！" }
+      },
+      review: {
+        timeline: [
+          "气象部门发布强对流预警，当地出现1—2厘米冰雹",
+          "群聊流传‘鸡蛋大’‘砸垮房屋’的图片",
+          "‘隐瞒预警’‘人工增雨打歪’等说法扩散",
+          "核查确认：冰雹为自然形成，人工增雨不会造成冰雹"
+        ],
+        distortion: "真实冰雹 → AI夸大图片 → ‘隐瞒预警’‘人工增雨致雹’的错误归因。",
+        personal: {
+          "true": "你判断‘夸张图是旧图或AI图’，这个方向是对的。真实冰雹是1—2厘米，预警也确实发了。但如果你继续转发时加了‘气象局终于承认了’这类标题，你仍然在放大不信任。正确信息被情绪包裹后，效果可能和谣言差不多。",
+          "false": "你把真实事件引向了错误归因：隐瞒预警或AI夸大的灾情。冰雹是真的，但‘故意不报’和‘鸡蛋大砸垮房屋’没有权威支持。人工增雨不会造成冰雹，消雹的原理恰恰是抑制冰雹增长。",
+          partial: "你选的方向有一部分贴近事实，但混入了未证实的归因。把部分对当成全对，是比纯假谣言更隐蔽的陷阱。"
+        }
+      }
+    }
+  };
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
+
+  function escHtml(str){
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function loadPrefs(){
+    try {
+      const raw = localStorage.getItem(PREF_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        return { soundOn: !!p.soundOn, reduceMotion: !!p.reduceMotion };
+      }
+    } catch (e) {}
+    return { soundOn: false, reduceMotion: false };
+  }
+  function savePrefs(){
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {}
+  }
+  function createSession(){
+    return {
+      eventId: null,
+      eventType: null,
+      selectedGuessId: null,
+      selectedGuessTruth: null,
+      currentPage: null,
+      visitedPages: []
+    };
+  }
+
+  let prefs = loadPrefs();
+  let session = createSession();
+  let drawState = { currentId: null, animating: false, hasDrawn: false };
+  let drawTimers = [];
+  let p1Timers = [];
+  let p2Timer = null;
+  let p3Timers = [];
+  let p3CounterTimer = null;
+  let p4Timer = null;
+  let p5Timers = [];
+  let p6Timers = [];
+  let toastTimer = null;
+  let toastNext = null;
+  let audioCtx = null;
+  let magActive = false;
+  let magPos = { x: 80, y: 0 };
+
+  const app = $("#app");
+  const toastModal = $("#modalToast");
+  const hailModal = $("#modalHail");
+  const magnifier = $("#magnifier");
+  const verdictBubble = $("#verdictBubble");
+  const melonP7Cursor = $("#melonP7Cursor");
+
+  function beep(freq, dur, type, vol){
+    if (!prefs.soundOn) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const t = audioCtx.currentTime;
+      const volume = typeof vol === "number" ? vol : 0.04;
+      const length = typeof dur === "number" ? dur : 0.08;
+      osc.type = type || "sine";
+      osc.frequency.value = freq || 640;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(volume, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + length);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + length + 0.02);
+    } catch (e) {}
+  }
+
+  function applyPrefs(){
+    document.documentElement.classList.toggle("reduce-motion", !!prefs.reduceMotion);
+    const soundBtn = $("#btnSound");
+    const motionBtn = $("#btnMotion");
+    if (soundBtn) {
+      soundBtn.textContent = prefs.soundOn ? "🔊" : "🔇";
+      soundBtn.classList.toggle("is-off", !prefs.soundOn);
+      soundBtn.setAttribute("aria-label", prefs.soundOn ? "关闭音效" : "开启音效");
+      soundBtn.title = prefs.soundOn ? "音效已开启" : "音效已关闭";
+    }
+    if (motionBtn) {
+      motionBtn.textContent = prefs.reduceMotion ? "🍃" : "🎞️";
+      motionBtn.classList.toggle("is-off", !!prefs.reduceMotion);
+      motionBtn.setAttribute("aria-label", prefs.reduceMotion ? "关闭弱动效" : "开启弱动效");
+      motionBtn.title = prefs.reduceMotion ? "弱动效已开启" : "动效已开启";
+    }
+  }
+
+  function showHailModal(){
+    hailModal.classList.add("show");
+    hailModal.setAttribute("aria-hidden", "false");
+    $("#btnHailOk").disabled = false;
+  }
+  function hideHailModal(){
+    hailModal.classList.remove("show");
+    hailModal.setAttribute("aria-hidden", "true");
+  }
+  function showToast(opts){
+    clearTimeout(toastTimer);
+    toastNext = opts.next || null;
+    $("#toastEmoji").textContent = opts.emoji || "🕊️";
+    $("#toastTitle").textContent = opts.title || "";
+    const bodyEl = $("#toastBody");
+    if (opts.body) {
+      bodyEl.textContent = opts.body;
+      bodyEl.hidden = false;
+    } else {
+      bodyEl.textContent = "";
+      bodyEl.hidden = true;
+    }
+    const bar = $("#toastBar");
+    bar.style.animation = "none";
+    void bar.offsetWidth;
+    if (!prefs.reduceMotion) {
+      bar.style.animation = "toastCount " + opts.duration + "ms linear forwards";
+    }
+    toastModal.classList.add("show");
+    toastModal.setAttribute("aria-hidden", "false");
+    toastTimer = setTimeout(function(){
+      toastModal.classList.remove("show");
+      toastModal.setAttribute("aria-hidden", "true");
+      bar.style.animation = "none";
+      const cb = toastNext;
+      toastNext = null;
+      if (cb) cb();
+    }, opts.duration);
+  }
+  function hideToast(){
+    clearTimeout(toastTimer);
+    toastTimer = null;
+    toastNext = null;
+    toastModal.classList.remove("show");
+    toastModal.setAttribute("aria-hidden", "true");
+  }
+
+  function clearTimers(){
+    drawTimers.forEach(clearTimeout);
+    p1Timers.forEach(clearTimeout);
+    p3Timers.forEach(clearTimeout);
+    p5Timers.forEach(clearTimeout);
+    p6Timers.forEach(clearTimeout);
+    drawTimers = [];
+    p1Timers = [];
+    p3Timers = [];
+    p5Timers = [];
+    p6Timers = [];
+    clearTimeout(p2Timer);
+    clearTimeout(p4Timer);
+    clearInterval(p3CounterTimer);
+    p2Timer = null;
+    p4Timer = null;
+    p3CounterTimer = null;
+  }
+
+  function go(page){
+    if (session.currentPage === page) return;
+    if (session.currentPage === "P3") {
+      p3Timers.forEach(clearTimeout);
+      clearInterval(p3CounterTimer);
+      p3Timers = [];
+      p3CounterTimer = null;
+    }
+    if (session.currentPage === "P7") deactivateMagnifier();
+
+    const target = $("#page" + page);
+    if (!target) return;
+
+    $$(".page").forEach(function(p){ p.classList.remove("active"); });
+    target.classList.add("active");
+
+    if (page === "P1") renderP1();
+    else if (page === "P2") renderP2();
+    else if (page === "P3") renderP3();
+    else if (page === "P4") renderP4();
+    else if (page === "P5") renderP5();
+    else if (page === "P6") renderP6();
+    else if (page === "P7") renderP7();
+    else if (page === "P8") renderP8();
+
+    session.currentPage = page;
+    if (session.visitedPages.indexOf(page) === -1) session.visitedPages.push(page);
+    app.dataset.page = page;
+
+    const scroller = target.querySelector(".page-scroll");
+    if (scroller) scroller.scrollTop = 0;
+
+    if (page === "P7") activateMagnifier();
+  }
+
+  function resetExperience(){
+    clearTimers();
+    hideToast();
+    hideHailModal();
+    deactivateMagnifier();
+    session = createSession();
+    drawState = { currentId: null, animating: false, hasDrawn: false };
+    resetDrawUI();
+    go("P0");
+  }
+
+  /* ---------- P0 ---------- */
+  function resetDrawUI(){
+    clearTimeout(drawTimers[0]);
+    const card = $("#drawCard");
+    card.classList.remove("show", "swapping", "pop");
+    card.style.display = "none";
+    card.innerHTML = "";
+    $("#btnDraw").hidden = false;
+    $("#btnDraw").disabled = false;
+    $("#drawRow").hidden = true;
+    $("#btnRedraw").disabled = false;
+    $("#btnEnter").disabled = false;
+    $("#gacha").classList.remove("shake");
+    $("#gachaArea").classList.remove("shrunk");
+    $("#egg").classList.remove("drop");
+    $("#flash").classList.remove("on");
+    const mp = $("#melonP0");
+    if (mp) mp.classList.remove("covering", "jump", "sad", "happy");
+    if (mp) mp.classList.add("happy");
+  }
+
+  function setDrawBusy(busy){
+    $("#btnDraw").disabled = busy;
+    $("#btnRedraw").disabled = busy;
+    $("#btnEnter").disabled = busy || !drawState.hasDrawn;
+  }
+
+  function pickEvent(excludeId){
+    const ids = Object.keys(EVENTS);
+    let pool = ids;
+    if (excludeId && ids.length > 1) {
+      pool = ids.filter(function(id){ return id !== excludeId; });
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function presentDraw(id){
+    drawState.currentId = id;
+    drawState.hasDrawn = true;
+    const ev = EVENTS[id];
+    const card = $("#drawCard");
+    card.innerHTML =
+      '<div class="dc-meta"><span class="tag">' + escHtml(ev.p0Tag) + '</span></div>' +
+      '<div class="dc-title">' + escHtml(ev.title) + '</div>' +
+      '<div class="dc-hint">点击进入查看完整开端与判断</div>';
+    $("#gachaArea").classList.add("shrunk");
+    card.style.display = "block";
+    card.classList.remove("swapping", "show", "pop");
+    void card.offsetWidth;
+    card.classList.add("show", "pop");
+    $("#btnDraw").hidden = true;
+    $("#drawRow").hidden = false;
+    $("#btnRedraw").disabled = true;
+    $("#btnEnter").disabled = true;
+    setTimeout(function(){
+      const sc = $("#p0Scroll");
+      if (!sc) return;
+      const top = Math.max(0, card.offsetTop - 12);
+      if (typeof sc.scrollTo === "function") {
+        sc.scrollTo({ top: top, behavior: prefs.reduceMotion ? "auto" : "smooth" });
+      } else {
+        sc.scrollTop = top;
+      }
+    }, prefs.reduceMotion ? 60 : 460);
+  }
+
+  function startDraw(){
+    if (drawState.animating) return;
+    drawState.animating = true;
+    setDrawBusy(true);
+    drawTimers.forEach(clearTimeout);
+    drawTimers = [];
+
+    const nextId = pickEvent(drawState.currentId);
+    const card = $("#drawCard");
+    const gachaArea = $("#gachaArea");
+    if (drawState.hasDrawn) {
+      card.style.display = "none";
+      card.classList.remove("show", "swapping", "pop");
+      gachaArea.classList.remove("shrunk");
+      const sc = $("#p0Scroll");
+      if (sc) sc.scrollTop = 0;
+    } else {
+      card.style.display = "none";
+    }
+
+    const mp = $("#melonP0");
+    mp.classList.remove("happy", "jump");
+    mp.classList.add("covering");
+
+    if (prefs.reduceMotion) {
+      presentDraw(nextId);
+      mp.classList.remove("covering");
+      mp.classList.add("happy");
+      drawState.animating = false;
+      setDrawBusy(false);
+      beep(760, 0.07, "triangle", 0.04);
+      return;
+    }
+
+    const gacha = $("#gacha");
+    const egg = $("#egg");
+    const flash = $("#flash");
+    gacha.style.setProperty("--drop-y", Math.round(gacha.clientHeight * 0.37) + "px");
+    gacha.classList.remove("shake");
+    void gacha.offsetWidth;
+    gacha.classList.add("shake");
+    beep(620, 0.05, "triangle", 0.035);
+
+    drawTimers.push(setTimeout(function(){
+      gacha.classList.remove("shake");
+      mp.classList.remove("covering");
+      mp.classList.add("jump");
+      egg.classList.remove("drop");
+      void egg.offsetWidth;
+      egg.classList.add("drop");
+      flash.classList.remove("on");
+      void flash.offsetWidth;
+      flash.classList.add("on");
+      beep(790, 0.08, "sine", 0.045);
+    }, 600));
+
+    drawTimers.push(setTimeout(function(){
+      presentDraw(nextId);
+    }, 980));
+
+    drawTimers.push(setTimeout(function(){
+      drawState.animating = false;
+      mp.classList.remove("jump");
+      mp.classList.add("happy");
+      $("#flash").classList.remove("on");
+      setDrawBusy(false);
+    }, 1480));
+  }
+
+  function enterEvent(){
+    if (!drawState.currentId || drawState.animating) return;
+    $("#btnEnter").disabled = true;
+    const ev = EVENTS[drawState.currentId];
+    session = createSession();
+    session.eventId = ev.id;
+    session.eventType = ev.type;
+    session.visitedPages = ["P0"];
+    go("P1");
+  }
+
+  /* ---------- P1 ---------- */
+  function renderP1(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    $("#p1Hot").textContent = "🔥 热搜 · " + ev.tag;
+    $("#p1Tag").textContent = ev.p0Tag;
+    $("#p1Title").textContent = ev.title;
+    $("#p1Summary").textContent = ev.opening;
+    $("#btnFake").disabled = false;
+    $("#btnNext").disabled = false;
+    $("#btnBackHome").disabled = false;
+    const mp = $("#melonP1");
+    mp.classList.remove("offer", "sad", "head-shake", "happy");
+  }
+
+  function onP1Fake(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    session.selectedGuessId = null;
+    session.selectedGuessTruth = "true";
+    $("#btnFake").disabled = true;
+    $("#btnNext").disabled = true;
+    const mp = $("#melonP1");
+    mp.classList.add("sad", "head-shake");
+    beep(520, 0.05, "triangle", 0.03);
+    p1Timers.push(setTimeout(function(){ mp.classList.remove("head-shake"); }, 700));
+
+    if (ev.type === "false") {
+      showToast({
+        title: "谣言止于智者",
+        body: "",
+        emoji: "🕊️",
+        duration: 2000,
+        next: function(){ go("P7"); }
+      });
+    } else {
+      showHailModal();
+    }
+  }
+
+  function onP1Next(){
+    $("#btnFake").disabled = true;
+    $("#btnNext").disabled = true;
+    const mp = $("#melonP1");
+    mp.classList.add("happy");
+    mp.classList.add("offer");
+    beep(680, 0.05, "triangle", 0.03);
+    p1Timers.push(setTimeout(function(){ go("P2"); }, 420));
+  }
+
+  /* ---------- P2 ---------- */
+  function renderP2(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    session.selectedGuessId = null;
+    session.selectedGuessTruth = null;
+    const list = $("#guessList");
+    list.innerHTML = "";
+    ev.guesses.forEach(function(g){
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "guess-card";
+      btn.dataset.guessId = g.id;
+      btn.setAttribute("aria-pressed", "false");
+      btn.innerHTML =
+        '<span class="guess-letter">' + escHtml(g.id) + '</span>' +
+        '<span class="guess-text">' + escHtml(g.text) + '</span>' +
+        '<span class="guess-check">✓</span>';
+      btn.addEventListener("click", function(){ selectGuess(g, btn); });
+      list.appendChild(btn);
+    });
+    $("#btnConfirmGuess").disabled = true;
+    const mp = $("#melonP2");
+    mp.classList.add("p2-looking");
+    mp.classList.remove("happy", "scared");
+    mp.style.top = "0px";
+    mp.style.right = "4px";
+    const bubble = $("#guessBubble");
+    bubble.classList.remove("show");
+    bubble.style.top = "0px";
+  }
+
+  function selectGuess(guess, btn){
+    session.selectedGuessId = guess.id;
+    session.selectedGuessTruth = guess.truthLevel;
+    $$("#guessList .guess-card").forEach(function(card){
+      card.classList.remove("selected");
+      card.setAttribute("aria-pressed", "false");
+    });
+    btn.classList.add("selected");
+    btn.setAttribute("aria-pressed", "true");
+    $("#btnConfirmGuess").disabled = false;
+
+    const mp = $("#melonP2");
+    mp.classList.remove("p2-looking");
+    mp.classList.add("happy");
+    const wrap = $("#guessWrap");
+    const top = btn.offsetTop + btn.offsetHeight - 42;
+    mp.style.top = Math.max(0, top) + "px";
+    mp.style.right = "4px";
+    void wrap.offsetWidth;
+    beep(700, 0.045, "triangle", 0.03);
+  }
+
+  function confirmGuess(){
+    if (!session.selectedGuessId) return;
+    $("#btnConfirmGuess").disabled = true;
+    const mp = $("#melonP2");
+    const bubble = $("#guessBubble");
+    const top = parseFloat(mp.style.top) || 0;
+    bubble.style.top = Math.max(0, top - 58) + "px";
+    bubble.classList.add("show");
+    beep(850, 0.06, "sine", 0.035);
+    clearTimeout(p2Timer);
+    p2Timer = setTimeout(function(){ go("P3"); }, 1100);
+  }
+
+  /* ---------- P3 ---------- */
+  function renderP3(){
+    p3Timers.forEach(clearTimeout);
+    clearInterval(p3CounterTimer);
+    p3Timers = [];
+    p3CounterTimer = null;
+
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    const guess = ev.guesses.filter(function(g){ return g.id === session.selectedGuessId; })[0];
+    const list = $("#p3List");
+    list.innerHTML = "";
+    const comments = (guess && ev.comments[guess.id]) ? ev.comments[guess.id] : [];
+    const names = ["吃瓜不吐皮", "群聊搬运工", "热心网友", "路过群众", "本地观察员"];
+    const avatars = ["🍉", "👀", "📣", "🤔", "🧢"];
+    const bgs = [
+      "linear-gradient(135deg,#4A2B3A,#33202B)",
+      "linear-gradient(135deg,#293A55,#202C3D)",
+      "linear-gradient(135deg,#4A3A24,#332B1E)",
+      "linear-gradient(135deg,#223B30,#1F2E26)",
+      "linear-gradient(135deg,#3B2A50,#2B2038)"
+    ];
+
+    comments.forEach(function(text, i){
+      const row = document.createElement("div");
+      row.className = "chat-row";
+      row.innerHTML =
+        '<div class="avatar" style="background:' + bgs[i % bgs.length] + '">' + avatars[i % avatars.length] + '</div>' +
+        '<div class="msg"><div class="chat-name">' + names[i % names.length] + ' · ' + (i + 1) + '楼</div>' +
+        '<div class="bubble">' + escHtml(text) + '</div></div>';
+      list.appendChild(row);
+      p3Timers.push(setTimeout(function(){ row.classList.add("in"); }, 120 * (i + 1)));
+    });
+
+    const base = ev.id === "wildVeg" ? 326 : (ev.id === "rewardScript" ? 518 : 412);
+    let count = base;
+    const counter = $("#forwardCount");
+    counter.textContent = count.toLocaleString("zh-CN");
+    ["300", "650", "1000"].forEach(function(ms){
+      p3Timers.push(setTimeout(function(){
+        count += 9 + Math.floor(Math.random() * 18);
+        counter.textContent = count.toLocaleString("zh-CN");
+      }, Number(ms)));
+    });
+    $("#btnP3Next").disabled = false;
+  }
+
+  /* ---------- P4 ---------- */
+  function renderP4(){
+    $("#btnStop").disabled = false;
+    $("#btnSpread").disabled = false;
+    const flash = $("#spreadFlash");
+    flash.classList.remove("show");
+    flash.textContent = "";
+  }
+
+  function stopMessage(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return "";
+    if (ev.type === "false") return "你停止了传播。但此前模拟转发已造成影响。";
+    return session.selectedGuessTruth === "true"
+      ? "你停止了放大真实事件中的未核实情绪。"
+      : "你及时叫停了错误猜测。";
+  }
+
+  function onStop(){
+    $("#btnStop").disabled = true;
+    $("#btnSpread").disabled = true;
+    beep(560, 0.05, "triangle", 0.03);
+    showToast({
+      title: "🛑 及时止损",
+      body: stopMessage(),
+      emoji: "✋",
+      duration: 1500,
+      next: function(){ go("P7"); }
+    });
+  }
+
+  function onSpread(){
+    $("#btnStop").disabled = true;
+    $("#btnSpread").disabled = true;
+    const flash = $("#spreadFlash");
+    flash.textContent = "你已把这条消息转给 3 个群";
+    flash.classList.add("show");
+    beep(440, 0.07, "sawtooth", 0.025);
+    clearTimeout(p4Timer);
+    p4Timer = setTimeout(function(){ go("P5"); }, 800);
+  }
+
+  /* ---------- P5 ---------- */
+  function spreadKey(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return "";
+    if (ev.type === "false") return ev.id + "_false";
+    return session.selectedGuessTruth === "true" ? "hailstorm_trueSpread" : "hailstorm_falseSpread";
+  }
+
+  function renderP5(){
+    p5Timers.forEach(clearTimeout);
+    p5Timers = [];
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    const key = spreadKey();
+    const segments = ev.spread[key] || [];
+    const wrap = $("#p5Segments");
+    wrap.innerHTML = "";
+    const els = [];
+    segments.forEach(function(text){
+      const p = document.createElement("p");
+      p.className = "fade-seg";
+      p.textContent = text;
+      wrap.appendChild(p);
+      els.push(p);
+    });
+    const btn = $("#btnP5Next");
+    btn.disabled = true;
+    p5Timers.push(setTimeout(function(){ if (els[0]) els[0].classList.add("in"); }, 30));
+    p5Timers.push(setTimeout(function(){ if (els[1]) els[1].classList.add("in"); }, 1200));
+    p5Timers.push(setTimeout(function(){
+      if (els[2]) els[2].classList.add("in");
+      btn.disabled = false;
+    }, 2400));
+  }
+
+  /* ---------- P6 ---------- */
+  function renderP6(){
+    p6Timers.forEach(clearTimeout);
+    p6Timers = [];
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    const chain = $("#chainPreview");
+    const out = $("#outScene");
+    const big = $("#p6Big");
+    chain.classList.remove("fading");
+    chain.hidden = false;
+    out.classList.remove("show");
+    out.hidden = true;
+    big.textContent = ev.type === "false" ? "你OUT了，谣言传播者！" : "你OUT了，未核验的放大器！";
+    big.classList.remove("play");
+    $("#btnP6Next").disabled = true;
+
+    p6Timers.push(setTimeout(function(){
+      if (!prefs.reduceMotion) chain.classList.add("fading");
+    }, 1300));
+
+    p6Timers.push(setTimeout(function(){
+      chain.hidden = true;
+      out.hidden = false;
+      void out.offsetWidth;
+      out.classList.add("show");
+      if (!prefs.reduceMotion) big.classList.add("play");
+      $("#btnP6Next").disabled = false;
+    }, 1500));
+  }
+
+  /* ---------- P7 ---------- */
+  function markText(text, keywords, used){
+    const found = [];
+    keywords.forEach(function(k){
+      if (used.has(k.text)) return;
+      const idx = text.indexOf(k.text);
+      if (idx !== -1) found.push({ k: k, start: idx, end: idx + k.text.length });
+    });
+    found.sort(function(a, b){ return a.start - b.start; });
+    const picked = [];
+    let end = -1;
+    found.forEach(function(f){
+      if (f.start >= end) {
+        picked.push(f);
+        end = f.end;
+      }
+    });
+    picked.forEach(function(f){ used.add(f.k.text); });
+    let out = "";
+    let pos = 0;
+    picked.forEach(function(f){
+      out += escHtml(text.slice(pos, f.start));
+      out += '<span class="keyword" data-verdict="' + escHtml(f.k.verdict) + '">' + escHtml(f.k.text) + '</span>';
+      pos = f.end;
+    });
+    out += escHtml(text.slice(pos));
+    return out;
+  }
+
+  function verdictClass(verdict){
+    return String(verdict).indexOf("已证实") === 0 ? "v-confirmed" : "v-false";
+  }
+
+  function markVerdict(el){
+    const v = el.getAttribute("data-verdict") || "";
+    el.classList.add(verdictClass(v));
+  }
+
+  function sectionCard(icon, title, body, extraClass){
+    return '<div class="card sec-card ' + (extraClass || '') + '">' +
+      '<div class="sec-head"><span class="sec-ico">' + icon + '</span><span>' + title + '</span></div>' +
+      '<div class="sec-body">' + body + '</div></div>';
+  }
+
+  function threeQsCard(){
+    return '<div class="card sec-card qs-card">' +
+      '<div class="sec-head"><span class="sec-ico">🧠</span><span>识谣三问</span></div>' +
+      '<div class="qs-list">' +
+      THREE_QS.map(function(item, i){
+        return '<div class="qs-item"><span class="qs-num">' + (i + 1) + '</span><div>' +
+          '<p class="qs-q">' + escHtml(item.q) + '</p>' +
+          '<p class="qs-a">' + escHtml(item.a) + '</p></div></div>';
+      }).join("") +
+      '</div></div>';
+  }
+
+  function keywordCard(fact){
+    return '<div class="card sec-card kw-card">' +
+      '<div class="sec-head"><span class="sec-ico">🔑</span><span>核查关键词</span></div>' +
+      '<p class="tiny">用放大镜扫过浅黄关键词，看看核查结论。</p>' +
+      '<div class="kw-chips">' +
+      fact.keywords.map(function(k){
+        return '<span class="keyword kw-chip" data-verdict="' + escHtml(k.verdict) + '">' + escHtml(k.text) + '</span>';
+      }).join("") +
+      '</div></div>';
+  }
+
+  function sourceCard(ev){
+    const s = ev.fact.source;
+    const href = LINKS[ev.id];
+    return '<div class="card source-card">' +
+      '<a class="source-link" href="' + href + '" target="_blank" rel="noopener noreferrer">' +
+      '核查来源：' + escHtml(s.name) + '《' + escHtml(s.title) + '》</a></div>';
+  }
+
+  function renderP7(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    const fact = ev.fact;
+    const used = new Set();
+    let html = "";
+
+    if (ev.type === "false") {
+      const evidence = markText(fact.evidence, fact.keywords, used);
+      const rumor = markText(fact.rumor, fact.keywords, used);
+      const confirmed = markText(fact.confirmed, fact.keywords, used);
+      const falseClaim = markText(fact.falseClaim, fact.keywords, used);
+      const insight = markText(fact.insight, fact.keywords, used);
+      html += sectionCard("💣", "谣言点", rumor, "rumor-card");
+      html += sectionCard("🧾", "关键证据", evidence, "evidence-card");
+      html += sectionCard("✅", "已证实", confirmed, "ok-card");
+      html += sectionCard("❌", "不实说法", falseClaim, "bad-card");
+      html += sectionCard("🧠", "识谣点", insight, "insight-card");
+    } else {
+      const confirmed = markText(fact.confirmed, fact.keywords, used);
+      const unconfirmed = markText(fact.unconfirmed, fact.keywords, used);
+      const falseClaim = markText(fact.falseClaim, fact.keywords, used);
+      const insight = markText(fact.insight, fact.keywords, used);
+      html += sectionCard("✅", "已证实", confirmed, "ok-card");
+      html += sectionCard("⚪", "未证实", unconfirmed, "mid-card");
+      html += sectionCard("❌", "不实说法", falseClaim, "bad-card");
+      html += sectionCard("🧠", "识谣点", insight, "insight-card");
+    }
+
+    html += keywordCard(fact);
+    $("#p7Body").innerHTML = html;
+    $("#p7Source").innerHTML = sourceCard(ev);
+    $("#btnRevealAll").disabled = false;
+    $("#btnRevealAll").textContent = "跳过交互，直接查看结论";
+    $("#btnP7Next").disabled = false;
+    hideBubble();
+  }
+
+  function revealP7All(){
+    $$("#p7Body .keyword").forEach(function(el){
+      el.classList.add("revealed");
+      markVerdict(el);
+    });
+    magActive = false;
+    magnifier.style.display = "none";
+    melonP7Cursor.style.display = "none";
+    hideBubble();
+    const btn = $("#btnRevealAll");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "已显示全部结论";
+    }
+    beep(720, 0.07, "sine", 0.035);
+  }
+
+  function activateMagnifier(){
+    const ar = app.getBoundingClientRect();
+    const startLeft = ar.width >= 160 ? (ar.left + 20) : 20;
+    magnifier.style.display = "block";
+    magnifier.style.left = startLeft + "px";
+    magnifier.style.top = "auto";
+    magnifier.style.bottom = "120px";
+    const r = magnifier.getBoundingClientRect();
+    magPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    magActive = true;
+    hideBubble();
+    melonP7Cursor.style.display = "block";
+    updateMelonCursor();
+    setTimeout(function(){ if (magActive) checkHit(); }, 80);
+  }
+
+  function deactivateMagnifier(){
+    magActive = false;
+    magnifier.style.display = "none";
+    melonP7Cursor.style.display = "none";
+    hideBubble();
+  }
+
+  function updateMelonCursor(){
+    if (!magActive) return;
+    if (prefs.reduceMotion) {
+      const ar = app.getBoundingClientRect();
+      melonP7Cursor.style.left = Math.max(8, Math.min(window.innerWidth - 48, ar.right - 56)) + "px";
+      melonP7Cursor.style.top = (ar.top + 126) + "px";
+      melonP7Cursor.style.bottom = "auto";
+      return;
+    }
+    const r = magnifier.getBoundingClientRect();
+    let left = r.right + 6;
+    let top = r.top + 22;
+    if (left + 44 > window.innerWidth - 8) left = r.left - 48;
+    if (left < 8) left = 8;
+    if (top < 8) top = 8;
+    if (top + 44 > window.innerHeight - 8) top = window.innerHeight - 52;
+    melonP7Cursor.style.left = left + "px";
+    melonP7Cursor.style.top = top + "px";
+    melonP7Cursor.style.bottom = "auto";
+  }
+
+  function hideBubble(){
+    verdictBubble.classList.remove("show", "v-confirmed", "v-false");
+    verdictBubble.textContent = "";
+  }
+
+  function moveMagnifier(x, y){
+    if (!magActive) return;
+    const cx = Math.max(60, Math.min(x, window.innerWidth - 60));
+    const cy = Math.max(60, Math.min(y, window.innerHeight - 60));
+    magnifier.style.left = (cx - 60) + "px";
+    magnifier.style.top = (cy - 60) + "px";
+    magnifier.style.bottom = "auto";
+    magPos = { x: cx, y: cy };
+    updateMelonCursor();
+    checkHit();
+  }
+
+  function checkHit(){
+    if (!magActive) return;
+    const keywords = $$("#pageP7 .keyword");
+    let hit = null;
+    for (let i = 0; i < keywords.length; i++) {
+      const el = keywords[i];
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      if (magPos.x >= r.left && magPos.x <= r.right && magPos.y >= r.top && magPos.y <= r.bottom) {
+        hit = el;
+        break;
+      }
+    }
+    if (!hit) {
+      hideBubble();
+      return;
+    }
+    const v = hit.getAttribute("data-verdict") || "";
+    markVerdict(hit);
+    verdictBubble.textContent = v;
+    verdictBubble.classList.remove("v-confirmed", "v-false");
+    verdictBubble.classList.add("show", verdictClass(v));
+    const half = Math.min(115, window.innerWidth / 2 - 8);
+    const left = Math.max(half, Math.min(magPos.x, window.innerWidth - half));
+    const bubbleHeight = verdictBubble.offsetHeight || 40;
+    const top = Math.max(bubbleHeight + 8, magPos.y - 72);
+    verdictBubble.style.left = left + "px";
+    verdictBubble.style.top = top + "px";
+  }
+
+  /* ---------- P8 ---------- */
+  function renderP8(){
+    const ev = EVENTS[session.eventId];
+    if (!ev) return;
+    const truth = session.selectedGuessTruth || "true";
+    const personal = ev.review.personal[truth] || ev.review.personal["false"];
+    const timeline = ev.review.timeline.map(function(item){
+      return '<div class="tl-item"><p class="tl-text">' + escHtml(item) + '</p></div>';
+    }).join("");
+
+    $("#p8Body").innerHTML =
+      '<div class="card recap-card">' +
+        '<div class="recap-meta"><span class="tag">' + escHtml(ev.tag) + '</span>' +
+        '<span class="recap-label">' + (ev.type === "false" ? "虚构事件" : "真实事件") + '</span></div>' +
+        '<h3>' + escHtml(ev.title) + '</h3>' +
+      '</div>' +
+      '<div class="card sec-card">' +
+        '<div class="sec-head"><span class="sec-ico">🕒</span><span>时间线</span></div>' +
+        '<div class="timeline">' + timeline +
+          '<div class="melon melon-p8 happy" aria-hidden="true">' +
+            '<span class="melon-sprout"></span><span class="melon-leaf"></span>' +
+            '<span class="melon-eye left"></span><span class="melon-eye right"></span>' +
+            '<span class="melon-mouth"></span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card sec-card">' +
+        '<div class="sec-head"><span class="sec-ico">🔀</span><span>谣言变形说明</span></div>' +
+        '<p class="sec-body">' + escHtml(ev.review.distortion) + '</p>' +
+      '</div>' +
+      '<div class="card review-card">' +
+        '<div class="review-kicker">🧩 个性化复盘</div>' +
+        '<p class="review-text">' + escHtml(personal) + '</p>' +
+      '</div>' +
+      threeQsCard();
+
+    $("#btnAgain").disabled = false;
+    $("#btnEnd").disabled = false;
+  }
+
+  /* ---------- bindings ---------- */
+  $("#btnSound").addEventListener("click", function(){
+    prefs.soundOn = !prefs.soundOn;
+    savePrefs();
+    applyPrefs();
+    if (prefs.soundOn) beep(880, 0.08, "sine", 0.05);
+  });
+
+  $("#btnMotion").addEventListener("click", function(){
+    prefs.reduceMotion = !prefs.reduceMotion;
+    savePrefs();
+    applyPrefs();
+  });
+
+  $("#btnDraw").addEventListener("click", startDraw);
+  $("#btnRedraw").addEventListener("click", startDraw);
+  $("#btnEnter").addEventListener("click", enterEvent);
+
+  $("#btnBackHome").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    resetExperience();
+  });
+
+  $("#btnFake").addEventListener("click", function(){
+    if (this.disabled) return;
+    onP1Fake();
+  });
+  $("#btnNext").addEventListener("click", function(){
+    if (this.disabled) return;
+    onP1Next();
+  });
+
+  $("#btnHailOk").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    hideHailModal();
+    beep(680, 0.06, "sine", 0.035);
+    go("P7");
+  });
+
+  $("#btnConfirmGuess").addEventListener("click", function(){
+    if (this.disabled) return;
+    confirmGuess();
+  });
+
+  $("#btnP3Next").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    go("P4");
+  });
+
+  $("#btnStop").addEventListener("click", function(){
+    if (this.disabled) return;
+    onStop();
+  });
+  $("#btnSpread").addEventListener("click", function(){
+    if (this.disabled) return;
+    onSpread();
+  });
+
+  $("#btnP5Next").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    go("P6");
+  });
+  $("#btnP6Next").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    go("P7");
+  });
+
+  $("#btnRevealAll").addEventListener("click", function(){
+    if (this.disabled) return;
+    revealP7All();
+  });
+
+  $("#btnP7Next").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    go("P8");
+  });
+
+  $("#btnAgain").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    $("#btnEnd").disabled = true;
+    resetExperience();
+  });
+  $("#btnEnd").addEventListener("click", function(){
+    if (this.disabled) return;
+    this.disabled = true;
+    $("#btnAgain").disabled = true;
+    go("P9");
+  });
+
+  document.addEventListener("touchstart", function(e){
+    if (!magActive) return;
+    const t = e.touches && e.touches[0];
+    if (t) moveMagnifier(t.clientX, t.clientY);
+  }, { passive: true });
+
+  document.addEventListener("touchmove", function(e){
+    if (!magActive) return;
+    const t = e.touches && e.touches[0];
+    if (t) moveMagnifier(t.clientX, t.clientY);
+  }, { passive: true });
+
+  document.addEventListener("mousemove", function(e){
+    if (!magActive) return;
+    moveMagnifier(e.clientX, e.clientY);
+  });
+
+  document.addEventListener("mouseleave", function(){
+    if (magActive) hideBubble();
+  });
+
+  const p7Scroll = $("#p7Scroll");
+  if (p7Scroll) {
+    p7Scroll.addEventListener("scroll", function(){
+      if (magActive) checkHit();
+    }, { passive: true });
+  }
+  window.addEventListener("resize", function(){
+    if (!magActive) return;
+    const r = magnifier.getBoundingClientRect();
+    magPos = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    updateMelonCursor();
+    checkHit();
+  });
+
+  document.addEventListener("click", function(e){
+    const btn = e.target.closest("button");
+    if (!btn || btn.disabled) return;
+    if (btn.classList.contains("tool-btn")) return;
+    if (btn.id === "btnDraw" || btn.id === "btnRedraw") return;
+    beep(540, 0.03, "triangle", 0.02);
+  });
+
+  applyPrefs();
+  resetDrawUI();
+  session.currentPage = "P0";
+  session.visitedPages = ["P0"];
+  app.dataset.page = "P0";
+})();
+</script>
+</body>
+</html>
